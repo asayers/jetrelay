@@ -1,0 +1,16 @@
+[package]
+name = "jetrelay"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.97"
+base64 = "0.22.1"
+gjson = "0.8.1"
+httparse = "1.10.1"
+rustix = { version = "1.0.3", features = ["pipe"] }
+rustix-uring = { git = "https://github.com/asayers/rustix-uring", branch = "submit-all" } 
+sha1_smol = "1.0.1"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+wsclient = { version = "0.1.0", path = "../wsclient" }
