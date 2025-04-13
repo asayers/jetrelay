@@ -1,11 +1,11 @@
-use anyhow::{Result, ensure};
+use anyhow::{Context, Result, ensure};
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::prelude::*;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use tracing::*;
-use wsclient::Frame;
+use wsclient::{Frame, OpCode};
 
 #[derive(Ord, PartialOrd, Eq, PartialEq, Debug, Copy, Clone)]
 pub struct Timestamp(pub u64);
@@ -28,20 +28,43 @@ pub fn copy_frames_to_file(
     let _g = info_span!("upstream copier thread").entered();
     info!("Copying data from upstream");
     for frame in iter {
-        let frame = frame?;
-        ensure!(frame.reserved_bits() == 0, "Non-zero reserved bits");
-        ensure!(frame.mask().is_none(), "Frame is masked");
-        ensure!(frame.opcode() == wsclient::OpCode::Text, "Non-text frame");
-        file.write_all(&frame.bytes).unwrap();
-        file.flush().unwrap();
-        let n = frame.bytes.len() as u64;
-        trace!("Wrote {n} bytes");
-        let offset = file_len.fetch_add(n, Ordering::Release);
-
-        let payload = std::str::from_utf8(frame.payload())?;
-        let timestamp = Timestamp(gjson::get(payload, "time_us").u64());
-        INDEX.lock().unwrap().insert(timestamp, offset);
-        // We could wake up the io_uring here... but we don't bother
+        match frame
+            .and_then(|frame| handle_frame(&mut file, &file_len, frame))
+        {
+            Ok(()) => (),
+            Err(e) => warn!("{e:#}"),
+        }
     }
     Ok(())
+}
+
+fn handle_frame(
+    file: &mut File,
+    file_len: &AtomicU64,
+    frame: Frame,
+) -> anyhow::Result<()> {
+    let timestamp = parse_frame(&frame).with_context(|| format!("{:?}", frame.bytes))?;
+
+    file.write_all(&frame.bytes)?;
+    file.flush()?;
+    let n = frame.bytes.len() as u64;
+    trace!("Wrote {n} bytes");
+    let offset = file_len.fetch_add(n, Ordering::Release);
+
+    INDEX.lock().unwrap().insert(timestamp, offset);
+
+    // We could wake up the io_uring here... but we don't bother
+    Ok(())
+}
+
+fn parse_frame(frame: &Frame) -> anyhow::Result<Timestamp> {
+    ensure!(frame.reserved_bits() == 0, "Non-zero reserved bits");
+    ensure!(frame.mask().is_none(), "Frame is masked");
+    let opcode = frame.opcode();
+    ensure!(opcode == OpCode::Text, "Non-text frame: {opcode:?}",);
+    let payload = std::str::from_utf8(frame.payload())?;
+    let timestamp = gjson::get(payload, "time_us");
+    ensure!(timestamp.kind() == gjson::Kind::Number);
+    let timestamp = Timestamp(timestamp.u64());
+    Ok(timestamp)
 }
