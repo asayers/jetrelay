@@ -4,7 +4,7 @@ use rustix::fd::AsRawFd;
 use rustix::io::Errno;
 use rustix::io_uring::io_uring_user_data;
 use rustix_uring::{cqueue, opcode, squeue, types::Timespec};
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 use tracing::*;
 
 /// A kind of cookie which you can attach to io_uring submissions, which allows
@@ -88,7 +88,7 @@ fn drain_pipe(client_id: ClientId, client: &mut Client) -> squeue::Entry {
 /// point, the next `FillPipe` will block.  `copy_in_flight` be stuck at `true`,
 /// preventing any more `FillPipe`s from being submitted.
 pub fn get_client_caught_up(
-    sqes: &mut VecDeque<squeue::Entry>,
+    sqes: &mut Vec<squeue::Entry>,
     file_len: u64,
     client_id: ClientId,
     client: &mut Client,
@@ -97,12 +97,12 @@ pub fn get_client_caught_up(
     if !client.copy_in_flight && client.offset < file_len {
         let n_bytes = u32::try_from(file_len - client.offset).unwrap();
         debug!("Copying {n_bytes} bytes into the pipe");
-        sqes.push_back(fill_pipe(client_id, client, n_bytes));
+        sqes.push(fill_pipe(client_id, client, n_bytes));
         client.copy_in_flight = true;
     }
     if !client.send_in_flight && client.bytes_in_pipe > 0 {
         debug!("Sending {} bytes to the socket", client.bytes_in_pipe);
-        sqes.push_back(drain_pipe(client_id, client));
+        sqes.push(drain_pipe(client_id, client));
         client.send_in_flight = true;
     }
     Ok(())

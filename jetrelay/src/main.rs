@@ -5,7 +5,7 @@ mod upstream;
 use anyhow::{Context, Result};
 use rustix::fd::{AsRawFd, OwnedFd};
 use rustix_uring::IoUring;
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 use std::net::{SocketAddr, TcpListener, TcpStream};
@@ -64,7 +64,7 @@ fn main() -> Result<()> {
         .name("upstream_copier".to_owned())
         .spawn(move || crate::upstream::copy_frames_to_file(file, file_len_2, ws_iter).unwrap())?;
 
-    let mut sqes = VecDeque::new();
+    let mut sqes = Vec::new();
 
     info!("Starting runloop");
     loop {
@@ -83,7 +83,7 @@ fn main() -> Result<()> {
             crate::io::get_client_caught_up(&mut sqes, file_len, *client_id, client)
                 .context("get_client_caught_up")?;
         }
-        sqes.push_back(crate::io::timeout());
+        sqes.push(crate::io::timeout());
         unsafe {
             uring.submit_all(sqes.drain(..)).context("submit_all")?;
         }
