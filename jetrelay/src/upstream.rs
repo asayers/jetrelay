@@ -35,17 +35,22 @@ const MAX_RETENTION: Duration = Duration::from_secs(2 * 60);
 pub fn copy_frames_to_file(
     mut file: File,
     file_len: Arc<AtomicU64>,
-    iter: impl Iterator<Item = anyhow::Result<Frame>>,
+    iter: impl Iterator<Item = std::io::Result<Frame>>,
 ) -> Result<()> {
     let _g = info_span!("upstream copier thread").entered();
     info!("Copying data from upstream");
     let mut first_timestamp = Timestamp(0);
     for frame in iter {
-        match frame
-            .and_then(|frame| handle_frame(&mut first_timestamp, &mut file, &file_len, frame))
-        {
+        let frame = match frame {
+            Ok(x) => x,
+            Err(e) => {
+                warn!("I/O error while reading from websocket: {e:#}");
+                continue;
+            }
+        };
+        match handle_frame(&mut first_timestamp, &mut file, &file_len, frame) {
             Ok(()) => (),
-            Err(e) => warn!("{e:#}"),
+            Err(e) => warn!("Bad frame: {e:#}"),
         }
     }
     Ok(())
