@@ -1,4 +1,4 @@
-use crate::ConnectionError;
+use crate::{ConnectionError, fill_buffer};
 use base64::prelude::*;
 use bytes::{Buf, BytesMut};
 use httparse::Response;
@@ -46,16 +46,8 @@ pub fn websocket_handshake_2(
     mut rdr: impl BufRead,
     buffer: &mut BytesMut,
 ) -> Result<(), ConnectionError> {
-    let mut fill_buffer = |buffer: &mut BytesMut| {
-        let slice = rdr.fill_buf()?;
-        let m = slice.len();
-        buffer.extend_from_slice(slice);
-        rdr.consume(m);
-        Ok(m)
-    };
-
     loop {
-        fill_buffer(buffer)?;
+        fill_buffer(&mut rdr, buffer)?;
         let mut headers = [httparse::EMPTY_HEADER; 16];
         let mut response = httparse::Response::new(&mut headers);
         let n = match response.parse(buffer)? {

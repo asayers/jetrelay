@@ -84,14 +84,6 @@ fn read_frame(
     buffer: &mut BytesMut,
     stop_at_eof: bool,
 ) -> std::io::Result<Option<Frame>> {
-    let mut fill_buffer = |buffer: &mut BytesMut| {
-        let slice = rdr.fill_buf()?;
-        let m = slice.len();
-        buffer.extend_from_slice(slice);
-        rdr.consume(m);
-        Ok(m)
-    };
-
     loop {
         match Frame::from_bytes(buffer) {
             Ok(x) => return Ok(Some(x)),
@@ -102,7 +94,7 @@ fn read_frame(
                 )));
             }
             Err(NeedMoreBytes(_)) => {
-                let m = fill_buffer(buffer)?;
+                let m = fill_buffer(rdr, buffer)?;
                 if m == 0 {
                     if stop_at_eof {
                         return Ok(None);
@@ -113,4 +105,12 @@ fn read_frame(
             }
         }
     }
+}
+
+fn fill_buffer(rdr: &mut impl BufRead, buffer: &mut BytesMut) -> std::io::Result<usize> {
+    let slice = rdr.fill_buf()?;
+    let m = slice.len();
+    buffer.extend_from_slice(slice);
+    rdr.consume(m);
+    Ok(m)
 }
