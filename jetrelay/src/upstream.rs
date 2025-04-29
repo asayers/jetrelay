@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, ensure};
+use anyhow::{Context, Result, bail, ensure};
 use rustix::fs::FallocateFlags;
 use std::collections::BTreeMap;
 use std::fs::File;
@@ -62,6 +62,13 @@ fn handle_frame(
     file_len: &AtomicU64,
     frame: Frame,
 ) -> anyhow::Result<()> {
+    match frame.opcode() {
+        OpCode::Text => (),            // Expected
+        OpCode::Ping => return Ok(()), // Ignore
+        OpCode::Close => bail!("Upstream is shutting us down :-("),
+        OpCode::Binary => bail!("Binary frame: {frame:?}"),
+        x => bail!("Unexpected opcode: {x:?}"),
+    }
     let timestamp = parse_frame(&frame).with_context(|| format!("{:?}", frame.bytes))?;
 
     file.write_all(&frame.bytes)?;
@@ -90,8 +97,6 @@ fn handle_frame(
 fn parse_frame(frame: &Frame) -> anyhow::Result<Timestamp> {
     ensure!(frame.reserved_bits() == 0, "Non-zero reserved bits");
     ensure!(frame.mask().is_none(), "Frame is masked");
-    let opcode = frame.opcode();
-    ensure!(opcode == OpCode::Text, "Non-text frame: {opcode:?}",);
     let payload = std::str::from_utf8(frame.payload())?;
     let timestamp = gjson::get(payload, "time_us");
     ensure!(timestamp.kind() == gjson::Kind::Number);
