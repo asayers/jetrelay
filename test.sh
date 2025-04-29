@@ -9,6 +9,7 @@ systemd-run \
     --service-type=exec \
     -pLimitNOFILE=65535 \
     -EJETRELAY_PORT=7375 \
+    -EUPSTREAM_URL=wss://jetstream2.us-west.bsky.network/subscribe \
     -pRuntimeDirectory=jetrelay \
     ./target/$musl/release/jetrelay
 
