@@ -3,8 +3,7 @@ musl=x86_64-unknown-linux-musl
 cargo build --release --target=$musl --bin=jetrelay
 systemd-run \
     --user \
-    --pty \
-    --same-dir \
+    --unit=jetrelay \
     --wait \
     --collect \
     --service-type=exec \
