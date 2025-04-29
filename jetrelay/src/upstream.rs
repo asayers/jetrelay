@@ -81,13 +81,13 @@ fn handle_frame(
 
     // If retention is over the max, drop until it's at the min
     if *first_timestamp < timestamp - MAX_RETENTION {
-        drop_old_data(&file, timestamp - MIN_RETENTION)?;
+        drop_old_data(file, timestamp - MIN_RETENTION)?;
         *first_timestamp = INDEX
             .lock()
             .unwrap()
             .first_key_value()
             .map_or(Timestamp(0), |x| *x.0);
-        info!("Dropped some data, new first_timestamp={first_timestamp:?}");
+        debug!("Dropped some data, new first_timestamp={first_timestamp:?}");
     }
 
     // We could wake up the io_uring here... but we don't bother
@@ -105,15 +105,29 @@ fn parse_frame(frame: &Frame) -> anyhow::Result<Timestamp> {
 }
 
 fn drop_old_data(file: &File, ts: Timestamp) -> anyhow::Result<()> {
+    static LAST_DROP_OFFSET: AtomicU64 = AtomicU64::new(0);
+
     let mut index = INDEX.lock().unwrap();
     let mut x = index.split_off(&ts);
     // split_off() returns everything after `ts`, but we want it the other way round
     std::mem::swap(&mut x, &mut *index);
     std::mem::drop(index);
+
     if let Some((_, offset)) = x.last_key_value() {
-        info!("Dropping data up to ts={ts:?}, offset={offset}");
+        debug!("Dropping data up to ts={ts:?}, offset={offset}");
         let flags = FallocateFlags::PUNCH_HOLE | FallocateFlags::KEEP_SIZE;
         rustix::fs::fallocate(file, flags, 0, *offset)?;
+
+        let n_dropped = x.len();
+        let duration = MAX_RETENTION - MIN_RETENTION; // approximately
+        let last_drop_offset = LAST_DROP_OFFSET.swap(*offset, Ordering::AcqRel);
+        let n_bytes = *offset - last_drop_offset;
+        info!("Over the last {duration:?} we recorded {n_dropped} msgs taking {n_bytes} bytes");
+        info!(
+            "Rate: {:.0} msgs/s, {:.1} KiB/s",
+            n_dropped as f64 / duration.as_secs_f64(),
+            n_bytes as f64 / duration.as_secs_f64() / 1024.,
+        );
     } else {
         warn!("Tried to drop up to ts={ts:?}, but there's no data that old");
     }
