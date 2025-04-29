@@ -19,6 +19,7 @@ use tracing_subscriber::{EnvFilter, prelude::*};
 /// Respects the following env vars:
 ///
 /// * JETRELAY_PORT (required)
+/// * UPSTREAM_URL (required)
 /// * RUNTIME_DIRECTORY (required)
 /// * RUST_LOG
 fn main() -> Result<()> {
@@ -55,8 +56,8 @@ fn main() -> Result<()> {
     let mut clients = HashMap::<ClientId, Client>::default();
     let mut next_client_id = 0;
 
-    let url = "wss://jetstream2.us-west.bsky.network/subscribe".parse()?;
-    // let url = "ws://localhost:6008/subscribe".parse()?;
+    let var = "UPSTREAM_URL";
+    let url = std::env::var(var).context(var)?.parse().context(var)?;
     let ws_iter = wsclient::connect_websocket(&url)?;
     info!("Connected to upstream");
     let file_len_2 = file_len.clone();
