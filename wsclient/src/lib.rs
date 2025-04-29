@@ -2,14 +2,16 @@ mod frame;
 mod handshake;
 
 pub use crate::frame::{Frame, NeedMoreBytes, OpCode};
-use anyhow::bail;
 use bytes::BytesMut;
 use std::io::{BufReader, prelude::*};
 use std::time::Duration;
 use std::{fs::File, net::TcpStream, path::Path};
+use thiserror::Error;
 use url::Url;
 
-pub fn read_websocket(path: &Path) -> anyhow::Result<impl Iterator<Item = anyhow::Result<Frame>>> {
+pub fn read_websocket(
+    path: &Path,
+) -> Result<impl Iterator<Item = std::io::Result<Frame>>, ConnectionError> {
     Ok(read_frames(
         BufReader::new(File::open(path)?),
         BytesMut::with_capacity(8192),
@@ -17,9 +19,31 @@ pub fn read_websocket(path: &Path) -> anyhow::Result<impl Iterator<Item = anyhow
     ))
 }
 
+#[derive(Error, Debug)]
+pub enum ConnectionError {
+    #[error("Wrong code: expected 101, saw {0:?}")]
+    WrongCode(Option<u16>),
+    #[error("Missing header {0}")]
+    MissingHeader(&'static str),
+    #[error("Wrong value for header {header}: expected {expected}, saw {saw}")]
+    WrongHeaderValue {
+        header: &'static str,
+        expected: &'static str,
+        saw: String,
+    },
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+    #[error(transparent)]
+    Httparse(#[from] httparse::Error),
+    #[error(transparent)]
+    InvalidDnsNameError(#[from] rustls::pki_types::InvalidDnsNameError),
+    #[error(transparent)]
+    Rustls(#[from] rustls::Error),
+}
+
 pub fn connect_websocket(
     url: &Url,
-) -> anyhow::Result<impl Iterator<Item = anyhow::Result<Frame>> + Send + 'static> {
+) -> Result<impl Iterator<Item = std::io::Result<Frame>> + Send + 'static, ConnectionError> {
     let host = url.host().unwrap().to_string();
     let port = url.port_or_known_default().unwrap();
     let mut conn = TcpStream::connect((host.as_str(), port))?;
@@ -48,7 +72,7 @@ fn read_frames(
     mut rdr: impl BufRead,
     mut buffer: BytesMut,
     stop_at_eof: bool,
-) -> impl Iterator<Item = anyhow::Result<Frame>> {
+) -> impl Iterator<Item = std::io::Result<Frame>> {
     std::iter::from_fn(move || read_frame(&mut rdr, &mut buffer, stop_at_eof).transpose())
         .take_while(|x| !x.as_ref().is_ok_and(|x| x.opcode() == OpCode::Close))
 }
@@ -57,20 +81,24 @@ fn read_frame(
     rdr: &mut impl BufRead,
     buffer: &mut BytesMut,
     stop_at_eof: bool,
-) -> anyhow::Result<Option<Frame>> {
+) -> std::io::Result<Option<Frame>> {
     let mut fill_buffer = |buffer: &mut BytesMut| {
         let slice = rdr.fill_buf()?;
         let m = slice.len();
         buffer.extend_from_slice(slice);
         rdr.consume(m);
-        anyhow::Ok(m)
+        Ok(m)
     };
 
     loop {
         match Frame::from_bytes(buffer) {
             Ok(x) => return Ok(Some(x)),
             Err(NeedMoreBytes(0)) => unreachable!(),
-            Err(NeedMoreBytes(n)) if n > 64 << 20 => bail!("Over-large message"),
+            Err(NeedMoreBytes(n)) if n > 64 << 20 => {
+                return Err(std::io::Error::other(format!(
+                    "Frame larger than max size: {n} bytes"
+                )));
+            }
             Err(NeedMoreBytes(_)) => {
                 let m = fill_buffer(buffer)?;
                 if m == 0 {

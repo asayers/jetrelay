@@ -1,4 +1,4 @@
-use anyhow::{anyhow, ensure};
+use crate::ConnectionError;
 use base64::prelude::*;
 use bytes::{Buf, BytesMut};
 use httparse::Response;
@@ -10,7 +10,7 @@ use url::Url;
 pub fn tls_handshake(
     hostname: &str,
     stream: TcpStream,
-) -> anyhow::Result<rustls::StreamOwned<rustls::ClientConnection, TcpStream>> {
+) -> Result<rustls::StreamOwned<rustls::ClientConnection, TcpStream>, ConnectionError> {
     let root_store = RootCertStore::from_iter(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
     let config = ClientConfig::builder()
         .with_root_certificates(root_store)
@@ -21,7 +21,7 @@ pub fn tls_handshake(
     Ok(stream)
 }
 
-pub fn websocket_handshake_1(mut conn: impl Write, url: &Url) -> anyhow::Result<()> {
+pub fn websocket_handshake_1(mut conn: impl Write, url: &Url) -> Result<(), ConnectionError> {
     const KEY_BYTES: usize = 16;
     let key = BASE64_STANDARD.encode(rand::random::<[u8; KEY_BYTES]>());
 
@@ -42,13 +42,16 @@ pub fn websocket_handshake_1(mut conn: impl Write, url: &Url) -> anyhow::Result<
 }
 
 // TODO: timeout
-pub fn websocket_handshake_2(mut rdr: impl BufRead, buffer: &mut BytesMut) -> anyhow::Result<()> {
+pub fn websocket_handshake_2(
+    mut rdr: impl BufRead,
+    buffer: &mut BytesMut,
+) -> Result<(), ConnectionError> {
     let mut fill_buffer = |buffer: &mut BytesMut| {
         let slice = rdr.fill_buf()?;
         let m = slice.len();
         buffer.extend_from_slice(slice);
         rdr.consume(m);
-        anyhow::Ok(m)
+        Ok(m)
     };
 
     loop {
@@ -65,23 +68,32 @@ pub fn websocket_handshake_2(mut rdr: impl BufRead, buffer: &mut BytesMut) -> an
     }
 }
 
-fn validate_response(response: Response) -> anyhow::Result<()> {
-    ensure!(response.code == Some(101)); // Switching Protocols
-    let header = |name: &str| -> anyhow::Result<&[u8]> {
-        response
-            .headers
-            .iter()
-            .find(|x| x.name.eq_ignore_ascii_case(name))
-            .map(|x| x.value)
-            .ok_or_else(|| anyhow!("Missing header: {name}"))
-    };
-    ensure!(
-        header("connection")?.eq_ignore_ascii_case(b"upgrade"),
-        "Wrong connection header"
-    );
-    ensure!(
-        header("upgrade")?.eq_ignore_ascii_case(b"websocket"),
-        "Wrong upgrade header"
-    );
+fn validate_response(response: Response) -> Result<(), ConnectionError> {
+    if response.code != Some(101 /* Switching Protocols */) {
+        return Err(ConnectionError::WrongCode(response.code));
+    }
+    check_header(&response, "connection", "upgrade")?;
+    check_header(&response, "upgrade", "websocket")?;
+    Ok(())
+}
+
+fn check_header(
+    response: &Response,
+    header: &'static str,
+    expected: &'static str,
+) -> Result<(), ConnectionError> {
+    let value = response
+        .headers
+        .iter()
+        .find(|x| x.name.eq_ignore_ascii_case(header))
+        .ok_or_else(|| ConnectionError::MissingHeader(header))?
+        .value;
+    if !value.eq_ignore_ascii_case(expected.as_bytes()) {
+        return Err(ConnectionError::WrongHeaderValue {
+            header,
+            expected,
+            saw: String::from_utf8_lossy(value).into_owned(),
+        });
+    }
     Ok(())
 }
