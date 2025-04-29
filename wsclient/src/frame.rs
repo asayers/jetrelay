@@ -1,5 +1,6 @@
 use bytes::{Buf, Bytes};
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Frame<T = Bytes> {
     pub bytes: T,
     pub header_len: usize,
