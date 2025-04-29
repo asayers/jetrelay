@@ -77,6 +77,8 @@ fn read_frames(
         .take_while(|x| !x.as_ref().is_ok_and(|x| x.opcode() == OpCode::Close))
 }
 
+const MAX_FRAME_SIZE: usize = 64 << 20; // 64 MiB
+
 fn read_frame(
     rdr: &mut impl BufRead,
     buffer: &mut BytesMut,
@@ -94,7 +96,7 @@ fn read_frame(
         match Frame::from_bytes(buffer) {
             Ok(x) => return Ok(Some(x)),
             Err(NeedMoreBytes(0)) => unreachable!(),
-            Err(NeedMoreBytes(n)) if n > 64 << 20 => {
+            Err(NeedMoreBytes(n)) if n > MAX_FRAME_SIZE => {
                 return Err(std::io::Error::other(format!(
                     "Frame larger than max size: {n} bytes"
                 )));
