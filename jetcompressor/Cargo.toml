@@ -1,0 +1,11 @@
+[package]
+name = "jetcompressor"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bpaf = { version = "0.9.19", features = ["derive"] }
+bstr = "1.12.0"
+fsst-rs = "0.5.2"
+url = "2.5.4"
+wsclient = { version = "0.1.0", path = "../wsclient" }
