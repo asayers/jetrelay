@@ -1,0 +1,485 @@
+Total: 0 evs, 0 MiB = 0 Mbps
+
+Total: 0 evs, 0 MiB = 0 Mbps
+
+Total: 0 evs, 0 MiB = 0 Mbps
+
+T-1s 0x0 x426 (245 evs, 139 KiB)
+Total: 104370 evs, 57 MiB = 456 Mbps
+
+T-1s 0x0 x1281 (208 evs, 118 KiB)
+Total: 266448 evs, 147 MiB = 1176 Mbps
+
+T-1s 0x0 x2141 (416 evs, 242 KiB)
+Total: 890656 evs, 507 MiB = 4056 Mbps
+
+T-1s 0x0 x2992 (466 evs, 248 KiB)
+Total: 1394272 evs, 726 MiB = 5808 Mbps
+
+T-1s 0x0 x3448 (312 evs, 181 KiB)
+Total: 1075776 evs, 610 MiB = 4880 Mbps
+
+T-1s 0x0 x4289 (290 evs, 170 KiB)
+Total: 1243810 evs, 714 MiB = 5712 Mbps
+
+T-1s 0x0 x5126 (316 evs, 178 KiB)
+Total: 1619816 evs, 895 MiB = 7160 Mbps
+
+T-1s 0x0 x5976 (300 evs, 180 KiB)
+Total: 1792800 evs, 1054 MiB = 8432 Mbps
+
+T-1s 0x0 x6817 (272 evs, 154 KiB)
+Total: 1854224 evs, 1027 MiB = 8216 Mbps
+
+T-1s 0x0 x7647 (260 evs, 154 KiB)
+Total: 1988220 evs, 1154 MiB = 9232 Mbps
+
+T-1s 0x0 x8486 (279 evs, 160 KiB)
+Total: 2367594 evs, 1328 MiB = 10624 Mbps
+
+T-1s 0x0 x8221 (381 evs, 197 KiB)
+Total: 3132201 evs, 1585 MiB = 12680 Mbps
+
+T-2s 0x0 x9186 (381 evs, 197 KiB)
+T-1s 0x0 x6276 (303 evs, 167 KiB)
+Total: 2269293 evs, 1215 MiB = 9720 Mbps
+
+T-3s 0x0 x9338 (381 evs, 197 KiB)
+T-2s 0x0 x9415 (303 evs, 167 KiB)
+T-1s 0x0 x3417 (282 evs, 164 KiB)
+Total: 1972623 evs, 1092 MiB = 8736 Mbps
+
+T-3s 0x0 x9956 (303 evs, 167 KiB)
+T-2s 0x0 x8505 (282 evs, 164 KiB)
+T-1s 0x0 x1650 (320 evs, 177 KiB)
+Total: 2126739 evs, 1189 MiB = 9512 Mbps
+
+T-4s 0x0 x9997 (303 evs, 167 KiB)
+T-3s 0x0 x9558 (282 evs, 164 KiB)
+T-2s 0x0 x5408 (320 evs, 177 KiB)
+T-1s 0x0 x1672 (289 evs, 153 KiB)
+Total: 1995137 evs, 1076 MiB = 8608 Mbps
+
+T-5s 0x0 x10000 (303 evs, 167 KiB)
+T-4s 0x0 x9928 (282 evs, 164 KiB)
+T-3s 0x0 x8330 (320 evs, 177 KiB)
+T-2s 0x0 x4694 (289 evs, 153 KiB)
+T-1s 0x0 x1616 (290 evs, 164 KiB)
+Total: 2382287 evs, 1279 MiB = 10232 Mbps
+
+T-5s 0x0 x9986 (282 evs, 164 KiB)
+T-4s 0x0 x9528 (320 evs, 177 KiB)
+T-3s 0x0 x7362 (289 evs, 153 KiB)
+T-2s 0x0 x3916 (290 evs, 164 KiB)
+T-1s 0x0 x1301 (277 evs, 149 KiB)
+Total: 2198145 evs, 1177 MiB = 9416 Mbps
+
+T-6s 0x0 x9999 (282 evs, 164 KiB)
+T-5s 0x0 x9890 (320 evs, 177 KiB)
+T-4s 0x0 x9022 (289 evs, 153 KiB)
+T-3s 0x0 x6617 (290 evs, 164 KiB)
+T-2s 0x0 x3696 (277 evs, 149 KiB)
+T-1s 0x0 x1006 (305 evs, 162 KiB)
+Total: 2352781 evs, 1258 MiB = 10064 Mbps
+
+T-7s 0x0 x10000 (282 evs, 164 KiB)
+T-6s 0x0 x9982 (320 evs, 177 KiB)
+T-5s 0x0 x9693 (289 evs, 153 KiB)
+T-4s 0x0 x8314 (290 evs, 164 KiB)
+T-3s 0x0 x5957 (277 evs, 149 KiB)
+T-2s 0x0 x2975 (305 evs, 162 KiB)
+T-1s 0x0 x203 (290 evs, 166 KiB)
+Total: 2001483 evs, 1066 MiB = 8528 Mbps
+
+T-7s 0x0 x9998 (320 evs, 177 KiB)
+T-6s 0x0 x9917 (289 evs, 153 KiB)
+T-5s 0x0 x9295 (290 evs, 164 KiB)
+T-4s 0x0 x7825 (277 evs, 149 KiB)
+T-3s 0x0 x5267 (305 evs, 162 KiB)
+T-2s 0x0 x2328 (290 evs, 166 KiB)
+T-1s 0x0 x521 (248 evs, 134 KiB)
+Total: 2316300 evs, 1246 MiB = 9968 Mbps
+
+T-8s 0x0 x10000 (320 evs, 177 KiB)
+T-7s 0x0 x9981 (289 evs, 153 KiB)
+T-6s 0x0 x9739 (290 evs, 164 KiB)
+T-5s 0x0 x8927 (277 evs, 149 KiB)
+T-4s 0x0 x7087 (305 evs, 162 KiB)
+T-3s 0x0 x4374 (290 evs, 166 KiB)
+T-2s 0x0 x2196 (248 evs, 134 KiB)
+T-1s 0x0 x91 (314 evs, 165 KiB)
+Total: 2045564 evs, 1099 MiB = 8792 Mbps
+
+T-8s 0x0 x9997 (289 evs, 153 KiB)
+T-7s 0x0 x9932 (290 evs, 164 KiB)
+T-6s 0x0 x9549 (277 evs, 149 KiB)
+T-5s 0x0 x8405 (305 evs, 162 KiB)
+T-4s 0x0 x6315 (290 evs, 166 KiB)
+T-3s 0x0 x4198 (248 evs, 134 KiB)
+T-2s 0x0 x1696 (314 evs, 165 KiB)
+T-1s 0x0 x419 (276 evs, 152 KiB)
+Total: 2313878 evs, 1233 MiB = 9864 Mbps
+
+T-9s 0x0 x9999 (289 evs, 153 KiB)
+T-8s 0x0 x9970 (290 evs, 164 KiB)
+T-7s 0x0 x9752 (277 evs, 149 KiB)
+T-6s 0x0 x9041 (305 evs, 162 KiB)
+T-5s 0x0 x7493 (290 evs, 166 KiB)
+T-4s 0x0 x5731 (248 evs, 134 KiB)
+T-3s 0x0 x3358 (314 evs, 165 KiB)
+T-2s 0x0 x1618 (276 evs, 152 KiB)
+T-1s 0x0 x673 (267 evs, 140 KiB)
+Total: 2016096 evs, 1069 MiB = 8552 Mbps
+
+T-10s 0x0 x10000 (289 evs, 153 KiB)
+T-9s 0x0 x9988 (290 evs, 164 KiB)
+T-8s 0x0 x9901 (277 evs, 149 KiB)
+T-7s 0x0 x9520 (305 evs, 162 KiB)
+T-6s 0x0 x8571 (290 evs, 166 KiB)
+T-5s 0x0 x7280 (248 evs, 134 KiB)
+T-4s 0x0 x5239 (314 evs, 165 KiB)
+T-3s 0x0 x3254 (276 evs, 152 KiB)
+T-2s 0x0 x1845 (267 evs, 140 KiB)
+T-1s 0x0 x684 (279 evs, 151 KiB)
+Total: 2435579 evs, 1288 MiB = 10304 Mbps
+
+T-10s 0x0 x9996 (290 evs, 164 KiB)
+T-9s 0x0 x9964 (277 evs, 149 KiB)
+T-8s 0x0 x9775 (305 evs, 162 KiB)
+T-7s 0x0 x9172 (290 evs, 166 KiB)
+T-6s 0x0 x8284 (248 evs, 134 KiB)
+T-5s 0x0 x6635 (314 evs, 165 KiB)
+T-4s 0x0 x4763 (276 evs, 152 KiB)
+T-3s 0x0 x3116 (267 evs, 140 KiB)
+T-2s 0x0 x1698 (279 evs, 151 KiB)
+T-1s 0x0 x742 (264 evs, 146 KiB)
+Total: 2193807 evs, 1161 MiB = 9288 Mbps
+
+T-11s 0x0 x10000 (290 evs, 164 KiB)
+T-10s 0x0 x9986 (277 evs, 149 KiB)
+T-9s 0x0 x9908 (305 evs, 162 KiB)
+T-8s 0x0 x9582 (290 evs, 166 KiB)
+T-7s 0x0 x9012 (248 evs, 134 KiB)
+T-6s 0x0 x7829 (314 evs, 165 KiB)
+T-5s 0x0 x6210 (276 evs, 152 KiB)
+T-4s 0x0 x4475 (267 evs, 140 KiB)
+T-3s 0x0 x2829 (279 evs, 151 KiB)
+T-2s 0x0 x1587 (264 evs, 146 KiB)
+T-1s 0x0 x497 (309 evs, 168 KiB)
+Total: 2176606 evs, 1151 MiB = 9208 Mbps
+
+T-11s 0x0 x9996 (277 evs, 149 KiB)
+T-10s 0x0 x9960 (305 evs, 162 KiB)
+T-9s 0x0 x9803 (290 evs, 166 KiB)
+T-8s 0x0 x9449 (248 evs, 134 KiB)
+T-7s 0x0 x8659 (314 evs, 165 KiB)
+T-6s 0x0 x7442 (276 evs, 152 KiB)
+T-5s 0x0 x5957 (267 evs, 140 KiB)
+T-4s 0x0 x4183 (279 evs, 151 KiB)
+T-3s 0x0 x2726 (264 evs, 146 KiB)
+T-2s 0x0 x1408 (309 evs, 168 KiB)
+T-1s 0x0 x480 (276 evs, 150 KiB)
+Total: 2279883 evs, 1207 MiB = 9656 Mbps
+
+T-12s 0x0 x10000 (277 evs, 149 KiB)
+T-11s 0x0 x9987 (305 evs, 162 KiB)
+T-10s 0x0 x9914 (290 evs, 166 KiB)
+T-9s 0x0 x9733 (248 evs, 134 KiB)
+T-8s 0x0 x9195 (314 evs, 165 KiB)
+T-7s 0x0 x8364 (276 evs, 152 KiB)
+T-6s 0x0 x7174 (267 evs, 140 KiB)
+T-5s 0x0 x5500 (279 evs, 151 KiB)
+T-4s 0x0 x3926 (264 evs, 146 KiB)
+T-3s 0x0 x2308 (309 evs, 168 KiB)
+T-2s 0x0 x1203 (276 evs, 150 KiB)
+T-1s 0x0 x316 (294 evs, 165 KiB)
+Total: 2114475 evs, 1122 MiB = 8976 Mbps
+
+T-12s 0x0 x9996 (305 evs, 162 KiB)
+T-11s 0x0 x9962 (290 evs, 166 KiB)
+T-10s 0x0 x9867 (248 evs, 134 KiB)
+T-9s 0x0 x9551 (314 evs, 165 KiB)
+T-8s 0x0 x8984 (276 evs, 152 KiB)
+T-7s 0x0 x8126 (267 evs, 140 KiB)
+T-6s 0x0 x6795 (279 evs, 151 KiB)
+T-5s 0x0 x5267 (264 evs, 146 KiB)
+T-4s 0x0 x3486 (309 evs, 168 KiB)
+T-3s 0x0 x2166 (276 evs, 150 KiB)
+T-2s 0x0 x1091 (294 evs, 165 KiB)
+T-1s 0x0 x423 (274 evs, 143 KiB)
+Total: 2275856 evs, 1209 MiB = 9672 Mbps
+
+T-13s 0x0 x9999 (305 evs, 162 KiB)
+T-12s 0x0 x9987 (290 evs, 166 KiB)
+T-11s 0x0 x9944 (248 evs, 134 KiB)
+T-10s 0x0 x9772 (314 evs, 165 KiB)
+T-9s 0x0 x9396 (276 evs, 152 KiB)
+T-8s 0x0 x8784 (267 evs, 140 KiB)
+T-7s 0x0 x7804 (279 evs, 151 KiB)
+T-6s 0x0 x6470 (264 evs, 146 KiB)
+T-5s 0x0 x4720 (309 evs, 168 KiB)
+T-4s 0x0 x3195 (276 evs, 150 KiB)
+T-3s 0x0 x1934 (294 evs, 165 KiB)
+T-2s 0x0 x1024 (274 evs, 143 KiB)
+T-1s 0x0 x461 (266 evs, 135 KiB)
+Total: 2185608 evs, 1158 MiB = 9264 Mbps
+
+T-14s 0x0 x10000 (305 evs, 162 KiB)
+T-13s 0x0 x9995 (290 evs, 166 KiB)
+T-12s 0x0 x9975 (248 evs, 134 KiB)
+T-11s 0x0 x9876 (314 evs, 165 KiB)
+T-10s 0x0 x9616 (276 evs, 152 KiB)
+T-9s 0x0 x9239 (267 evs, 140 KiB)
+T-8s 0x0 x8464 (279 evs, 151 KiB)
+T-7s 0x0 x7377 (264 evs, 146 KiB)
+T-6s 0x0 x5838 (309 evs, 168 KiB)
+T-5s 0x0 x4298 (276 evs, 150 KiB)
+T-4s 0x0 x2818 (294 evs, 165 KiB)
+T-3s 0x0 x1758 (274 evs, 143 KiB)
+T-2s 0x0 x966 (266 evs, 135 KiB)
+T-1s 0x0 x387 (298 evs, 168 KiB)
+Total: 2009320 evs, 1066 MiB = 8528 Mbps
+
+T-14s 0x0 x10000 (290 evs, 166 KiB)
+T-13s 0x0 x9991 (248 evs, 134 KiB)
+T-12s 0x0 x9949 (314 evs, 165 KiB)
+T-11s 0x0 x9811 (276 evs, 152 KiB)
+T-10s 0x0 x9538 (267 evs, 140 KiB)
+T-9s 0x0 x9019 (279 evs, 151 KiB)
+T-8s 0x0 x8231 (264 evs, 146 KiB)
+T-7s 0x0 x6897 (309 evs, 168 KiB)
+T-6s 0x0 x5495 (276 evs, 150 KiB)
+T-5s 0x0 x3839 (294 evs, 165 KiB)
+T-4s 0x0 x2695 (274 evs, 143 KiB)
+T-3s 0x0 x1691 (266 evs, 135 KiB)
+T-2s 0x0 x846 (298 evs, 168 KiB)
+T-1s 0x0 x380 (250 evs, 138 KiB)
+Total: 2181441 evs, 1157 MiB = 9256 Mbps
+
+T-14s 0x0 x9999 (248 evs, 134 KiB)
+T-13s 0x0 x9980 (314 evs, 165 KiB)
+T-12s 0x0 x9913 (276 evs, 152 KiB)
+T-11s 0x0 x9743 (267 evs, 140 KiB)
+T-10s 0x0 x9424 (279 evs, 151 KiB)
+T-9s 0x0 x8879 (264 evs, 146 KiB)
+T-8s 0x0 x7838 (309 evs, 168 KiB)
+T-7s 0x0 x6620 (276 evs, 150 KiB)
+T-6s 0x0 x5052 (294 evs, 165 KiB)
+T-5s 0x0 x3692 (274 evs, 143 KiB)
+T-4s 0x0 x2621 (266 evs, 135 KiB)
+T-3s 0x0 x1470 (298 evs, 168 KiB)
+T-2s 0x0 x843 (250 evs, 138 KiB)
+T-1s 0x0 x365 (256 evs, 131 KiB)
+Total: 2252263 evs, 1191 MiB = 9528 Mbps
+
+T-15s 0x0 x10000 (248 evs, 134 KiB)
+T-14s 0x0 x9992 (314 evs, 165 KiB)
+T-13s 0x0 x9966 (276 evs, 152 KiB)
+T-12s 0x0 x9881 (267 evs, 140 KiB)
+T-11s 0x0 x9673 (279 evs, 151 KiB)
+T-10s 0x0 x9305 (264 evs, 146 KiB)
+T-9s 0x0 x8598 (309 evs, 168 KiB)
+T-8s 0x0 x7583 (276 evs, 150 KiB)
+T-7s 0x0 x6237 (294 evs, 165 KiB)
+T-6s 0x0 x4857 (274 evs, 143 KiB)
+T-5s 0x0 x3635 (266 evs, 135 KiB)
+T-4s 0x0 x2303 (298 evs, 168 KiB)
+T-3s 0x0 x1464 (250 evs, 138 KiB)
+T-2s 0x0 x880 (256 evs, 131 KiB)
+T-1s 0x0 x340 (268 evs, 141 KiB)
+Total: 2301821 evs, 1214 MiB = 9712 Mbps
+
+T-15s 0x0 x9997 (314 evs, 165 KiB)
+T-14s 0x0 x9985 (276 evs, 152 KiB)
+T-13s 0x0 x9944 (267 evs, 140 KiB)
+T-12s 0x0 x9825 (279 evs, 151 KiB)
+T-11s 0x0 x9600 (264 evs, 146 KiB)
+T-10s 0x0 x9111 (309 evs, 168 KiB)
+T-9s 0x0 x8345 (276 evs, 150 KiB)
+T-8s 0x0 x7207 (294 evs, 165 KiB)
+T-7s 0x0 x5969 (274 evs, 143 KiB)
+T-6s 0x0 x4723 (266 evs, 135 KiB)
+T-5s 0x0 x3334 (298 evs, 168 KiB)
+T-4s 0x0 x2257 (250 evs, 138 KiB)
+T-3s 0x0 x1472 (256 evs, 131 KiB)
+T-2s 0x0 x835 (268 evs, 141 KiB)
+T-1s 0x0 x338 (275 evs, 145 KiB)
+Total: 2274678 evs, 1197 MiB = 9576 Mbps
+
+T-16s 0x0 x10000 (314 evs, 165 KiB)
+T-15s 0x0 x9994 (276 evs, 152 KiB)
+T-14s 0x0 x9978 (267 evs, 140 KiB)
+T-13s 0x0 x9912 (279 evs, 151 KiB)
+T-12s 0x0 x9765 (264 evs, 146 KiB)
+T-11s 0x0 x9428 (309 evs, 168 KiB)
+T-10s 0x0 x8903 (276 evs, 150 KiB)
+T-9s 0x0 x8007 (294 evs, 165 KiB)
+T-8s 0x0 x6973 (274 evs, 143 KiB)
+T-7s 0x0 x5807 (266 evs, 135 KiB)
+T-6s 0x0 x4279 (298 evs, 168 KiB)
+T-5s 0x0 x3181 (250 evs, 138 KiB)
+T-4s 0x0 x2241 (256 evs, 131 KiB)
+T-3s 0x0 x1461 (268 evs, 141 KiB)
+T-2s 0x0 x780 (275 evs, 145 KiB)
+T-1s 0x0 x290 (287 evs, 152 KiB)
+Total: 2212960 evs, 1160 MiB = 9280 Mbps
+
+T-16s 0x0 x9996 (276 evs, 152 KiB)
+T-15s 0x0 x9991 (267 evs, 140 KiB)
+T-14s 0x0 x9957 (279 evs, 151 KiB)
+T-13s 0x0 x9869 (264 evs, 146 KiB)
+T-12s 0x0 x9650 (309 evs, 168 KiB)
+T-11s 0x0 x9269 (276 evs, 150 KiB)
+T-10s 0x0 x8589 (294 evs, 165 KiB)
+T-9s 0x0 x7730 (274 evs, 143 KiB)
+T-8s 0x0 x6723 (266 evs, 135 KiB)
+T-7s 0x0 x5341 (298 evs, 168 KiB)
+T-6s 0x0 x4192 (250 evs, 138 KiB)
+T-5s 0x0 x3164 (256 evs, 131 KiB)
+T-4s 0x0 x2230 (268 evs, 141 KiB)
+T-3s 0x0 x1442 (275 evs, 145 KiB)
+T-2s 0x0 x774 (287 evs, 152 KiB)
+T-1s 0x0 x371 (269 evs, 143 KiB)
+Total: 2268193 evs, 1187 MiB = 9496 Mbps
+
+T-17s 0x0 x10000 (276 evs, 152 KiB)
+T-16s 0x0 x9996 (267 evs, 140 KiB)
+T-15s 0x0 x9982 (279 evs, 151 KiB)
+T-14s 0x0 x9942 (264 evs, 146 KiB)
+T-13s 0x0 x9793 (309 evs, 168 KiB)
+T-12s 0x0 x9550 (276 evs, 150 KiB)
+T-11s 0x0 x9070 (294 evs, 165 KiB)
+T-10s 0x0 x8400 (274 evs, 143 KiB)
+T-9s 0x0 x7536 (266 evs, 135 KiB)
+T-8s 0x0 x6321 (298 evs, 168 KiB)
+T-7s 0x0 x5176 (250 evs, 138 KiB)
+T-6s 0x0 x4123 (256 evs, 131 KiB)
+T-5s 0x0 x3064 (268 evs, 141 KiB)
+T-4s 0x0 x2134 (275 evs, 145 KiB)
+T-3s 0x0 x1322 (287 evs, 152 KiB)
+T-2s 0x0 x786 (269 evs, 143 KiB)
+T-1s 0x0 x365 (267 evs, 145 KiB)
+Total: 2255403 evs, 1180 MiB = 9440 Mbps
+
+T-17s 0x0 x9999 (267 evs, 140 KiB)
+T-16s 0x0 x9993 (279 evs, 151 KiB)
+T-15s 0x0 x9973 (264 evs, 146 KiB)
+T-14s 0x0 x9888 (309 evs, 168 KiB)
+T-13s 0x0 x9737 (276 evs, 150 KiB)
+T-12s 0x0 x9390 (294 evs, 165 KiB)
+T-11s 0x0 x8879 (274 evs, 143 KiB)
+T-10s 0x0 x8183 (266 evs, 135 KiB)
+T-9s 0x0 x7124 (298 evs, 168 KiB)
+T-8s 0x0 x6111 (250 evs, 138 KiB)
+T-7s 0x0 x5064 (256 evs, 131 KiB)
+T-6s 0x0 x3989 (268 evs, 141 KiB)
+T-5s 0x0 x2969 (275 evs, 145 KiB)
+T-4s 0x0 x2039 (287 evs, 152 KiB)
+T-3s 0x0 x1299 (269 evs, 143 KiB)
+T-2s 0x0 x806 (267 evs, 145 KiB)
+T-1s 0x0 x445 (230 evs, 121 KiB)
+Total: 2245787 evs, 1172 MiB = 9376 Mbps
+
+T-18s 0x0 x10000 (267 evs, 140 KiB)
+T-17s 0x0 x9997 (279 evs, 151 KiB)
+T-16s 0x0 x9986 (264 evs, 146 KiB)
+T-15s 0x0 x9938 (309 evs, 168 KiB)
+T-14s 0x0 x9846 (276 evs, 150 KiB)
+T-13s 0x0 x9612 (294 evs, 165 KiB)
+T-12s 0x0 x9251 (274 evs, 143 KiB)
+T-11s 0x0 x8711 (266 evs, 135 KiB)
+T-10s 0x0 x7802 (298 evs, 168 KiB)
+T-9s 0x0 x6895 (250 evs, 138 KiB)
+T-8s 0x0 x5926 (256 evs, 131 KiB)
+T-7s 0x0 x4846 (268 evs, 141 KiB)
+T-6s 0x0 x3806 (275 evs, 145 KiB)
+T-5s 0x0 x2773 (287 evs, 152 KiB)
+T-4s 0x0 x1936 (269 evs, 143 KiB)
+T-3s 0x0 x1277 (267 evs, 145 KiB)
+T-2s 0x0 x818 (230 evs, 121 KiB)
+T-1s 0x0 x505 (254 evs, 129 KiB)
+Total: 2158388 evs, 1122 MiB = 8976 Mbps
+
+T-18s 0x0 x9999 (279 evs, 151 KiB)
+T-17s 0x0 x9995 (264 evs, 146 KiB)
+T-16s 0x0 x9975 (309 evs, 168 KiB)
+T-15s 0x0 x9916 (276 evs, 150 KiB)
+T-14s 0x0 x9763 (294 evs, 165 KiB)
+T-13s 0x0 x9508 (274 evs, 143 KiB)
+T-12s 0x0 x9147 (266 evs, 135 KiB)
+T-11s 0x0 x8415 (298 evs, 168 KiB)
+T-10s 0x0 x7654 (250 evs, 138 KiB)
+T-9s 0x0 x6837 (256 evs, 131 KiB)
+T-8s 0x0 x5781 (268 evs, 141 KiB)
+T-7s 0x0 x4722 (275 evs, 145 KiB)
+T-6s 0x0 x3649 (287 evs, 152 KiB)
+T-5s 0x0 x2723 (269 evs, 143 KiB)
+T-4s 0x0 x1923 (267 evs, 145 KiB)
+T-3s 0x0 x1375 (230 evs, 121 KiB)
+T-2s 0x0 x885 (254 evs, 129 KiB)
+T-1s 0x0 x515 (269 evs, 142 KiB)
+Total: 2371357 evs, 1232 MiB = 9856 Mbps
+
+T-19s 0x0 x10000 (279 evs, 151 KiB)
+T-18s 0x0 x9998 (264 evs, 146 KiB)
+T-17s 0x0 x9985 (309 evs, 168 KiB)
+T-16s 0x0 x9951 (276 evs, 150 KiB)
+T-15s 0x0 x9862 (294 evs, 165 KiB)
+T-14s 0x0 x9692 (274 evs, 143 KiB)
+T-13s 0x0 x9421 (266 evs, 135 KiB)
+T-12s 0x0 x8866 (298 evs, 168 KiB)
+T-11s 0x0 x8217 (250 evs, 138 KiB)
+T-10s 0x0 x7515 (256 evs, 131 KiB)
+T-9s 0x0 x6574 (268 evs, 141 KiB)
+T-8s 0x0 x5527 (275 evs, 145 KiB)
+T-7s 0x0 x4471 (287 evs, 152 KiB)
+T-6s 0x0 x3491 (269 evs, 143 KiB)
+T-5s 0x0 x2596 (267 evs, 145 KiB)
+T-4s 0x0 x1940 (230 evs, 121 KiB)
+T-3s 0x0 x1375 (254 evs, 129 KiB)
+T-2s 0x0 x865 (269 evs, 142 KiB)
+T-1s 0x0 x433 (263 evs, 142 KiB)
+Total: 2133478 evs, 1108 MiB = 8864 Mbps
+
+T-19s 0x0 x9999 (264 evs, 146 KiB)
+T-18s 0x0 x9993 (309 evs, 168 KiB)
+T-17s 0x0 x9982 (276 evs, 150 KiB)
+T-16s 0x0 x9920 (294 evs, 165 KiB)
+T-15s 0x0 x9828 (274 evs, 143 KiB)
+T-14s 0x0 x9653 (266 evs, 135 KiB)
+T-13s 0x0 x9264 (298 evs, 168 KiB)
+T-12s 0x0 x8761 (250 evs, 138 KiB)
+T-11s 0x0 x8175 (256 evs, 131 KiB)
+T-10s 0x0 x7381 (268 evs, 141 KiB)
+T-9s 0x0 x6470 (275 evs, 145 KiB)
+T-8s 0x0 x5382 (287 evs, 152 KiB)
+T-7s 0x0 x4378 (269 evs, 143 KiB)
+T-6s 0x0 x3403 (267 evs, 145 KiB)
+T-5s 0x0 x2689 (230 evs, 121 KiB)
+T-4s 0x0 x2001 (254 evs, 129 KiB)
+T-3s 0x0 x1363 (269 evs, 142 KiB)
+T-2s 0x0 x882 (263 evs, 142 KiB)
+T-1s 0x0 x446 (267 evs, 137 KiB)
+Total: 2444419 evs, 1266 MiB = 10128 Mbps
+
+T-19s 0x0 x9994 (309 evs, 168 KiB)
+T-18s 0x0 x9989 (276 evs, 150 KiB)
+T-17s 0x0 x9948 (294 evs, 165 KiB)
+T-16s 0x0 x9881 (274 evs, 143 KiB)
+T-15s 0x0 x9772 (266 evs, 135 KiB)
+T-14s 0x0 x9481 (298 evs, 168 KiB)
+T-13s 0x0 x9119 (250 evs, 138 KiB)
+T-12s 0x0 x8652 (256 evs, 131 KiB)
+T-11s 0x0 x7962 (268 evs, 141 KiB)
+T-10s 0x0 x7162 (275 evs, 145 KiB)
+T-9s 0x0 x6131 (287 evs, 152 KiB)
+T-8s 0x0 x5174 (269 evs, 143 KiB)
+T-7s 0x0 x4151 (267 evs, 145 KiB)
+T-6s 0x0 x3382 (230 evs, 121 KiB)
+T-5s 0x0 x2642 (254 evs, 129 KiB)
+T-4s 0x0 x1919 (269 evs, 142 KiB)
+T-3s 0x0 x1309 (263 evs, 142 KiB)
+T-2s 0x0 x819 (267 evs, 137 KiB)
+T-1s 0x0 x403 (283 evs, 153 KiB)
+Total: 2105447 evs, 1091 MiB = 8728 Mbps
+

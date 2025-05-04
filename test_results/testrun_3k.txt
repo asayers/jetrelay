@@ -1,0 +1,58 @@
+root@localhost:~# jettester ws://45.79.100.150:7375/subscribe -j6000
+Total: 0 evs, 0 MiB = 0 Mbps
+
+Total: 0 evs, 0 MiB = 0 Mbps
+
+Total: 0 evs, 0 MiB = 0 Mbps
+
+T-1s 0x0 x718 (243 evs, 126 KiB)
+Total: 174474 evs, 88 MiB = 704 Mbps
+
+T-1s 0x0 x1587 (218 evs, 113 KiB)
+Total: 345966 evs, 176 MiB = 1408 Mbps
+
+T-1s 0x0 x2443 (288 evs, 145 KiB)
+Total: 703584 evs, 348 MiB = 2784 Mbps
+
+T-1s 0x0 x3254 (277 evs, 146 KiB)
+Total: 901358 evs, 464 MiB = 3712 Mbps
+
+T-1s 0x0 x4026 (257 evs, 132 KiB)
+Total: 1034682 evs, 520 MiB = 4160 Mbps
+
+T-1s 0x0 x4866 (258 evs, 132 KiB)
+Total: 1255428 evs, 631 MiB = 5048 Mbps
+
+T-1s 0x0 x5718 (274 evs, 145 KiB)
+Total: 1566732 evs, 812 MiB = 6496 Mbps
+
+T-1s 0x0 x6000 (243 evs, 129 KiB)
+Total: 1458000 evs, 758 MiB = 6064 Mbps
+
+T-1s 0x0 x6000 (281 evs, 144 KiB)
+Total: 1686000 evs, 849 MiB = 6792 Mbps
+
+T-1s 0x0 x6000 (253 evs, 128 KiB)
+Total: 1518000 evs, 754 MiB = 6032 Mbps
+
+T-1s 0x0 x6000 (272 evs, 135 KiB)
+Total: 1632000 evs, 796 MiB = 6368 Mbps
+
+T-1s 0x0 x6000 (247 evs, 130 KiB)
+Total: 1482000 evs, 762 MiB = 6096 Mbps
+
+T-1s 0x0 x6000 (319 evs, 158 KiB)
+Total: 1914000 evs, 930 MiB = 7440 Mbps
+
+T-1s 0x0 x6000 (347 evs, 170 KiB)
+Total: 2082000 evs, 1000 MiB = 8000 Mbps
+
+T-1s 0x0 x6000 (300 evs, 151 KiB)
+Total: 1800000 evs, 885 MiB = 7080 Mbps
+
+T-1s 0x0 x6000 (251 evs, 128 KiB)
+Total: 1506000 evs, 752 MiB = 6016 Mbps
+
+T-1s 0x0 x6000 (261 evs, 132 KiB)
+Total: 1566000 evs, 774 MiB = 6192 Mbps
+
