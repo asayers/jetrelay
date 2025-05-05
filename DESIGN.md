@@ -28,6 +28,11 @@ with Bluesky's "jetstream" data feed.  Its performance is an order of
 magnitude better than the official jetstream server.  Read on to learn what
 (Linux-specific) tricks it has up its sleeve.
 
+> tricks it has up its sleeve.
+This reads weird to me: it sounds like it is about the future, whereas you
+already says the perf is an order of magnitude better.  I would use "how it
+accomplishes this" or swap the sentences somehow.
+
 ---
 
 ## ATproto, jetstream, and relays
@@ -37,6 +42,10 @@ stream of events representing all changes to the state of the network.  The
 firehose contains all the new posts, as you'd expect; but also people liking
 things, deleting/editing their old posts, following people, etc.  It covers the
 whole of Bluesky, so it's fairly active.
+
+> Bluesky
+> ATproto
+Consider adding links.
 
 This data comes in two flavours: the original full-fat firehose, and a new
 slimmed-down version called "[jetstream](https://docs.bsky.app/blog/jetstream)".
@@ -60,6 +69,9 @@ in this post I'm going to explain how it works.  It's only ~500 LOC, and very
 little of it is actually specific to jetstream.  The techniques described below
 should be applicable to any pub/sub protocol.
 
+> any pub/sub protocol.
+maybe add some example, e.g. XMPP
+
 <details>
 <summary>There are some differences between jetrelay and the official jetstream
 server.  Click here to see them.</summary>
@@ -71,6 +83,10 @@ server.  Click here to see them.</summary>
   feed (via a timestamp).  This allows clients to backfill any data they may have
   missed.  Jetrelay will support this, since I do think it counts as "essential
   functionality".
+
+> Jetrelay will support this
+"This feature is currently missing but will be added in a future release"?
+
 * The official jetstream server lets clients filter the data by
   [collection](https://atproto.com/guides/glossary#collection) or by
   [DID](https://atproto.com/specs/did).  This is clearly a central feature of
@@ -89,6 +105,10 @@ same data_ to all clients. And I don't just mean the JSON values are the same;
 the header bytes in the websocket frames are the same too.  Once the initial
 handshake is complete, the bytes one client sees coming down the pipe are
 identical to what any other client sees.
+
+> identical
+My main question when reading this is how this works with encryption.  Does the
+protocol not support it?  Maybe worth adding that.
 
 This is called "multicast".  On local networks, you can use UDP
 multicast[^multicast group] and have the kernel/network hardware take care of
@@ -118,6 +138,9 @@ resident in the kernel's page cache (ie. in memory).  And with `sendfile()`, the
 data goes straight from the page cache to the network stack, without needing to
 be copied into our program's memory in between.
 
+> it has great performance
+it is a very cheap operation
+
 The best thing about this design is that it naturally batches writes for clients
 which are a long way behind.  A client which is up-to-date will receive new
 messages as soon as they're ready; but if there are multiple messages ready to
@@ -139,9 +162,17 @@ block us for a long time.  In order to avoid starving fast clients, we'd have
 to spawn a thread per-client.  That's no good---we're trying to scale to many
 thousands of clients here.
 
+> That's no good
+It's often claimed that threads are cheap (I don't know about rust specifically)
+but maybe worth adding that while they're not expensive, they're still not free.
+Maybe include a napkin estimate of memory per thread x6000 clients.
+
 So enter the second piece of high-tech: `io_uring`.  With this we can issue a
 bunch of `sendfile()`s---one per client---and then submit them all to the kernel
 in a single syscall.  Our main runloop will look like this:
+
+> the second piece of high-tech
+the second cool Linux feature?
 
 1. For each client: if it's behind (and writeable), add a `sendfile()` to the
    submission queue.
