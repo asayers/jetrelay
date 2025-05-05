@@ -28,6 +28,10 @@ with Bluesky's "jetstream" data feed.  Its performance is an order of
 magnitude better than the official jetstream server.  Read on to learn what
 (Linux-specific) tricks it has up its sleeve.
 
+> compatible
+after reading through the article it's clear that its not really compatible
+(yet), so I think I would mention it's a bit of an experiment / MVP thing
+
 > tricks it has up its sleeve.
 This reads weird to me: it sounds like it is about the future, whereas you
 already says the perf is an order of magnitude better.  I would use "how it
@@ -633,6 +637,10 @@ subscribe to the middleman!  Think of Apple's push notification system: your
 phone connects to one of Apple's servers, and then that server relays push
 notifications on behalf of WhatsApp, Uber, etc.
 
+> middleman
+maybe worth mentioning that you can have several layers to scale this as
+required
+
 Another comparison you could make is with RSS.  The way RSS works is that each
 publisher has a list of entries ("feed.xml"), and they're allowed to add entries
 to the top of the list. Feed aggregators poll these lists periodically, and when
@@ -656,6 +664,10 @@ operator is.[^verify in theory]
 
 The pull-based internet has HTTP.  The push-based internet has made do with RSS
 for a long time.  A new, more capable standard could be a great development.
+
+> with RSS
+This seems reasonable but on the other hand RSS isn't very popular these days.
+I think it's worth comparing it to websockets (additionally or in place of RSS)
 
 </details>
 
