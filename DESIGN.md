@@ -1,12 +1,16 @@
+<html lang="en">
+<head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Jetrelay</title>
+
 <style>
-body { max-width: 800px; margin: auto; padding: 1em; text-align: justify; }
-h1 { text-align: center; }
+body { max-width: 800px; margin: auto; padding: 1em; }
+body { text-align: justify; hyphens: auto; }
+header { margin-bottom: 2em; }
+header h1 { text-align: center; font-size: 2em; }
 pre { margin-left: 3em; }
-.footnote-definition p { display: inline; }
-.footnote-definition { padding: 1em; }
+code { font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace; font-size: 85%; margin: 0; hyphens: manual; }
 table { border-collapse: collapse; margin: auto; }
 td, th { border-right: solid black 1px; border-left: solid black 1px; padding: 0.4em }
 th { border-bottom: solid black 1px; }
@@ -16,159 +20,207 @@ summary h2,h3 { display: inline; }
 .appendix { padding-top: 1em; padding-bottom: 1em; }
 img { display: block; margin: auto; }
 figure { margin-bottom: 2em; }
+date { display: block; text-align: right; font-style: italic; }
+img { height: auto; max-width: 100%; }
 </style>
+
+</head>
+<body>
+<article>
+<header>
+
 
 Let the kernel do the work!<br>Tricks for implementing a pub/sub server
 =======================================================================
 
 ---
 
-This post explains the design of **jetrelay**, a pub/sub server compatible
-with Bluesky's "jetstream" data feed.  Its performance is an order of
-magnitude better than the official jetstream server.  Read on to learn what
-(Linux-specific) tricks it has up its sleeve.
+This post explains the design of **jetrelay**, a pub/sub server compatible with
+Bluesky's "jetstream" data feed.  Using a few pertinent Linux kernel features,
+it avoids doing almost any work itself.  As a result, it's highly efficient: it
+can saturate a 10 Gbps network connection with just 8 CPU cores.
 
 ---
 
-## ATproto, jetstream, and relays
+<date>May 2025</date>
+</header>
 
-Bluesky is built on ATproto, and a core part of ATproto is "the firehose", a
-stream of events representing all changes to the state of the network.  The
+<!-- max-width: 36em; -->
+<!-- padding: 50px; -->
+<!-- h1, h2, h3, { margin-top: 1.4em; } -->
+<!-- ol, ul { padding-left: 1.7em; margin-top: 1em; } -->
+<!-- li > ol, li > ul { margin-top: 0; } -->
+<!-- blockquote { margin: 1em 0 1em 1.7em; padding-left: 1em; border-left: 2px solid #e6e6e6; color: #606060; } -->
+<!-- pre { margin: 1em 0; overflow: auto; } -->
+<!-- pre code { padding: 0; overflow: visible; overflow-wrap: normal; } -->
+<!-- table { margin: 1em 0; border-collapse: collapse; width: 100%; overflow-x: auto; display: block; } -->
+<!-- table caption { margin-bottom: 0.75em; } -->
+<!-- code{white-space: pre-wrap;} -->
+
+The challenge: Broadcasting at line rate
+----------------------------------------
+
+Bluesky is built on ATproto, and a core part of ATproto is "[the firehose]",
+a stream of events representing all changes to the state of the network.  The
 firehose contains all the new posts, as you'd expect; but also people liking
 things, deleting/editing their old posts, following people, etc.  It covers the
 whole of Bluesky, so it's fairly active.
 
+[the firehose]: https://atproto.com/specs/sync#firehose
+
 This data comes in two flavours: the original full-fat firehose, and a new
-slimmed-down version called "[jetstream](https://docs.bsky.app/blog/jetstream)".
+slimmed-down version called "[jetstream]".
 Both feeds are websockets-based, but jetstream encodes its payloads as JSON
 (rather than CBOR) and omits the bits that are only needed for authentication.
 Also, I think jetstream only contains a subset of the events.
 
-The average message size on jetstream is around half a kilobyte.  The event rate
-is variable (I guess it depends on which countries are awake), but it seems to
-be around 300--500 events per second.  A _relay_ is a server which follows an
-upstream feed provider and re-broadcasts the data to its own clients.[^relay topo]
-Napkin estimate: running on a machine with a 10 gigabit NIC, your relay
-should be able serve `10Gbps / (0.5KiB * 400/s)` = [~6000 clients][numbat]
-simultaneously.
+[jetstream]: https://docs.bsky.app/blog/jetstream
+
+The average message size on jetstream is around half a kilobyte.  The event
+rate is variable (I guess it depends on which countries are awake), but it
+seems to be around 300--500 events per second.  A _relay_ is a server which
+follows an upstream feed provider and re-broadcasts the data to its own
+clients.[^relay_topo] Napkin estimate: running on a machine with a 10 gigabit
+NIC, your relay should be able serve [`10Gbps / (0.5KiB * 400/s)`][numbat] =
+~6000 clients simultaneously.
 
 [numbat]: https://numbat.dev/?q=10+Gbps+%2F+%280.5+KiB+*+400%2Fs%29%E2%8F%8E
 
-OK, challenge accepted!  I've written a simple jetstream relay which I'm calling
-"jetrelay".  [The code lives here](https://github.com/asayers/jetrelay), and
-in this post I'm going to explain how it works.  It's only ~500 LOC, and very
-little of it is actually specific to jetstream.  The techniques described below
-should be applicable to any pub/sub protocol.
+OK, challenge accepted!  I've written a simple jetstream relay
+which I'm calling "jetrelay".  It's only ~500 LOC, [the code lives
+here](https://github.com/asayers/jetrelay), and in this post I'm going to
+explain how it works.
 
-<details>
-<summary>There are some differences between jetrelay and the official jetstream
-server.  Click here to see them.</summary>
+Very few of those 500 lines are actually specific to jetstream.  The point
+of jetrelay is to demonstrate the techniques described below, which should
+be transferrable to implementations of other pub/sub protocols.  Be aware,
+though, that jetrelay is a tech demo---[more code](#appendix-tech-demo) would be
+required before using it in anger.
 
-* The official jetstream server consumes the full-fat firehose as its upstream
-  data source, but for simplicity jetrelay will use another jetstream server as
-  its upstream. JSON in, JSON out.
-* When clients connect to the server they specify their initial position in the
-  feed (via a timestamp).  This allows clients to backfill any data they may have
-  missed.  Jetrelay will support this, since I do think it counts as "essential
-  functionality".
-* The official jetstream server lets clients filter the data by
-  [collection](https://atproto.com/guides/glossary#collection) or by
-  [DID](https://atproto.com/specs/did).  This is clearly a central feature of
-  jetstream, but jetrelay is going to omit it for now.  We're going to focus on
-  the "full stream" use-case: every client gets the complete feed, whether they
-  want it or not.
-* Finally, the official server is cross-platform.  Jetrelay is Linux-only.
+Also note: I'm not aiming for feature-parity with the official jetstream server.
+In particular, the official server lets clients filter the data by [collection]
+or by [DID].  I'm focusing just on the "full stream" use-case: every client
+gets the complete feed, whether they want it or not.  Bluesky clearly considers
+filtering to be an important feature, so I thought it worth mentioning the
+omission.  There are some other[^json-in-json-out] differences[^compression]
+too.
 
-</details>
+[collection]: https://atproto.com/guides/glossary#collection
+[DID]: https://atproto.com/specs/did
 
-## Trick #1: Multicast, and bypassing userspace with `sendfile()`
+
+Multicast and backfill
+----------------------
 
 Our remit is to accept events from an upstream data feed and re-broadcast those
 events to our clients.  The key observation is that we're sending the _exact
-same data_ to all clients. And I don't just mean the JSON values are the same;
-the header bytes in the websocket frames are the same too.  Once the initial
-handshake is complete, the bytes one client sees coming down the pipe are
-identical to what any other client sees.
+same data_ to all clients.  And I don't just mean the JSON values are the
+same; it's _all_ the same, right down to the headers of the websocket frames.
+Excluding the initial HTTP handshake, every client sees the same bytes coming
+down the pipe.[^encryption]
 
 This is called "multicast".  On local networks, you can use UDP
-multicast[^multicast group] and have the kernel/network hardware take care of
-everything for you (although it's UDP so there are some gotchas[^udp caveat 1]
-[^udp caveat 2]).  The jetstream protocol is based on websockets, though, which
-is based on TCP.  Multicast-for-TCP isn't really a thing,[^reliable multicast]
+multicast[^multicast_group] and have the kernel/network hardware take care of
+everything for you (although it's UDP so there are some gotchas[^udp_caveat_1]
+[^udp_caveat_2]).  The jetstream protocol is based on websockets, though, which
+is based on TCP.  Multicast-for-TCP isn't really a thing,[^reliable_multicast]
 so we're going to have to implement it ourselves.
 
-The vast majority of the time, the data we'll be sending out is events which
-have just come in. _Sometimes_, though, we'll need to send old events.  This
-happens when a client connects asking to be back-filled from a certain point in
-the feed.  It can also happen when clients are just slow to read.  This means
-a copy of all the data we receive will need to be written to disk.
+A second observation is that, although clients do see the exact same events,
+they _don't_ necessarily see them at the exact same time.  Fast clients will always
+be receiving the latest events, but slower clients may start lagging behind when
+the feed is especially  active.  These slow clients will be receiving a delayed version of
+the feed until things quiet down and they get a chance to catch up.
 
-OK, time for our first neat trick!  As new events arrive, we'll append them
-to a file.  We'll store the data exactly as it'll look on the wire---websocket
-framing bytes and everything---all ready to go.  For each client, we keep a
-cursor which points to some position in the file.  If a client's cursor doesn't
-point to the end of the file, we copy the missing bytes from the file into the
-client's socket.
+And then there's backfill:  when clients connect to the server they specify
+their initial position in the feed via a timestamp.  This allows clients to come
+back online after a disconnect and fill in the events they missed.  In other
+words, it's perfectly normal to be sending out data which is minutes or even
+hours old.
+
+The upshot is that our relay is not going to be a purely in-memory system. A
+copy of all the event data will need to be saved to disk.
+
+Trick #1: Bypassing userspace with `sendfile()`
+-----------------------------------------------
+
+As new events arrive, we'll append them to a file.  We'll store the data exactly
+as it'll look on the wire---websocket framing bytes and everything---all ready
+to go.[^kafka]  For each client, we keep a cursor which points to some position
+in the file.  If a client's cursor doesn't point to the end of the file, we copy
+the missing bytes from the file into the client's socket.  ...And that's it!
 
 The kernel has a syscall for this: `sendfile()`.  You specify a file, a range
 of bytes within the file, and a socket to send the bytes to.  Not only is this
-very simple, it has great performance.  You might think "fetching data from
-disk sounds expensive", but since this is data we've just written, it will be
+easy-to-use, it's also very cheap.  You might think "fetching data from disk
+sounds expensive"; but since this is data we've only just written, it will be
 resident in the kernel's page cache (ie. in memory).  And with `sendfile()`, the
-data goes straight from the page cache to the network stack, without needing to
-be copied into our program's memory in between.
+data goes straight from the page cache to the network stack.  Compare this with
+a conventional `read()`/`write()` approach, where the data would be copied into
+our program's memory and then back again.
 
-The best thing about this design is that it naturally batches writes for clients
-which are a long way behind.  A client which is up-to-date will receive new
-messages as soon as they're ready; but if there are multiple messages ready to
-send, they can all be copied into the socket as a single chunk.  If the chunk is
-bigger than 4 KiB (~8 events) then the kernel can avoid even more copies, since
-a complete pages of data can simply be passed around by reference.
+<figure>
+
+![](sendfile.svg)
+
+<figcaption>
+
+A new event arrives from upstream and is written to the end of the file.  The
+clients are no longer considered "up-to-date", because their cursors no longer
+point to the end of the file.  For each client, we call `sendfile()` to send the
+new data, updating the client's cursor when the call returns.
+
+</figcaption>
+</figure>
+
+The _best_ thing about this "file-and-cursor" design:  it naturally performs
+write-batching.  A client which is up-to-date will receive new messages
+one-at-a-time, as soon as they're ready; but if there are multiple messages
+ready to send, they can all be copied into the socket as a single chunk.  Better
+yet, page-sized chunks of data (4 KiB = ~8 events) can be passed by reference.
+In this case, the network stack is literally reading data straight out of the
+page cache, with zero unnecessary copies!
 
 Smoothly trading away latency in favour of throughput when clients are falling
 behind is really important for this kind of application.  Programs which do
-the opposite---get less efficient when under load---are the stuff of SRE horror
+the opposite---ie. get _less_ efficient when under load---are the stuff of SRE horror
 stories.
 
 
-## Trick #2: Handling many clients in parallel with `io_uring`
+Trick #2: Handling many clients in parallel with io_uring
+---------------------------------------------------------
 
-One syscall, no copies---what more could you want!  Well, `sendfile()` blocks
-the current thread until the copy is complete.  If the client is slow, they can
-block us for a long time.  In order to avoid starving fast clients, we'd have
-to spawn a thread per-client.  That's no good---we're trying to scale to many
-thousands of clients here.
+One syscall, no copies---what more could you want!  Well, `sendfile()` is
+synchronous: it blocks the current thread until the data is sent.  But if
+a client has gone AWOL and its send buffer is full, the next `sendfile()`
+to that client will block indefinitely!  That means we're gonna need to give
+each client its own dedicated thread.  But I don't really want to spawn 6000
+threads...[^threads]
 
-So enter the second piece of high-tech: `io_uring`.  With this we can issue a
-bunch of `sendfile()`s---one per client---and then submit them all to the kernel
-in a single syscall.  Our main runloop will look like this:
+Fortunately there's a better solution!  Linux has a mechanism called "io_uring".
+With this we can prepare a bunch of `sendfile()`s and submit them all to the
+kernel in a single syscall.  The kernel then sends back completion events as the
+`sendfile()`s finish.  It's like a channel for syscalls!
 
-1. For each client: if it's behind (and writeable), add a `sendfile()` to the
-   submission queue.
-2. Submit the I/Os and wait for completions (with a timeout).
-3. For each completed `sendfile()`: bump the client's cursor.
+With io_uring, our main runloop looks like this:
+
+1. For each client which is not up-to-date (and is writeable), add a
+   `sendfile()` to the submission queue.
+2. Submit all the `sendfile()`s and wait for completions (with a timeout).
+3. For each completion, update the associated client's cursor.
 4. Go to (1).
 
-So all-in-all our program will have three long-lived threads:
+When all clients are up-to-date, the thread will sleep, waking up periodically
+to re-check the file length (thanks to the timeout).  On the other hand, if
+a client is far behind and hungry for data, the thread will loop quickly,
+submitting a new `sendfile()` as soon as the previous one completes, and the
+client will get caught up fast.
 
-* **event writer thread**: This one follows the upstream ATproto event feed and
-  writes the new events to the file (including the websocket header).
-* **client handshake thread**: This one listens for new client connections.
-  When new a client connects, it performs the HTTP/websocket handshake and adds
-  them to the set of active clients.
-* **main runloop thread**: This is the one (just described above) which tries to
-  keep clients up-to-date with the file.
-
-When clients are far behind, we'll loop quickly to get them caught up.  When the
-clients are all up-to-date, we'll re-check the file length periodically (based
-on the timeout).
-
-With this design, neither the number of threads nor the number of syscalls
-depends on the number of clients. A huge number of clients can be connected,
-and the amount of (userspace) work our program does barely changes.  Of course,
-the amount of work the _kernel_ has to do does increase---but there's no getting
-around that.  Our job is to orchestrate the necessary I/O as efficiently as
-possible and then get out of the kernel's way.
+Note: the number of syscalls performed by our program does not depend on the
+number of clients!  A huge number of clients can connect, and the amount of work
+jetrelay does will barely change.  Of course, the _kernel_ will have more work
+to do---but that's unavoidable.  Our job is to orchestrate the necessary I/O as
+efficiently as possible and then get out of the kernel's way.
 
 One detail I glossed over: io_uring doesn't actually have a sendfile operation!
 But not to fear: we can emulate a `sendfile()` with two `splice()`s. First you
@@ -182,54 +234,46 @@ Thanks to the awesome [rustix crate](https://github.com/bytecodealliance/rustix)
 for making implementing all this stuff easy![^rustix]
 
 
-<details>
-<summary><h3>Diagrams</h3></summary>
+Not a trick: Getting new clients connected
+------------------------------------------
 
-I'm told that the above explanation needs some diagrams, so here's my best shot
-at making some:
+In the first section I told you about the **event writer thread**, which
+receives ATproto events from upstream and writes them to the file.  In the
+second section I described the **I/O orchestration thread**, which keeps
+clients up-to-date with the file.
 
-<figure>
+Jetrelay has one more thread which I haven't mentioned yet: the **client
+handshake thread**.  This one listens for new client connections.  When new a
+client connects, it performs the HTTP/websocket handshake and adds them to the
+set of active clients.
 
-![new event arrives](new_event.svg)
+Recall that when clients connect they can specify their initial position, as
+a timestamp.  To support this we're going to need and index which translates
+timestamps to byte-offsets in our file.  I'm using a `BTreeMap<Timestamp,
+Offset>`.[^btreemap]
 
-<figcaption>
+We can give the event-writer thread a bit more work to do:  after it finishes
+writing an event to the file, it parses the event's timestamp and pushes an
+entry to the index.  In theory the index doesn't have to cover _every_ event,
+so we could do this only every _N_ events;  but it's fast, so I just do it every
+time.
 
-A new event arrives from upstream and is copied to the end of the file.  The
-clients' cursors were previously pointing to the end of the file, but now there's data in front of their
-cursors which needs to be sent.
+Now, when a client connects, all we have to do is to look up the requested
+timestamp in the index and use the result to initialise the client's file
+offset.  Note that the index is being written by one thread and read by another,
+so I've shoved it in a `Mutex`.
 
-</figcaption>
-</figure>
+...and that's it!  The next time the io_uring thread wakes up it'll see the new
+client and start `sendfile()`ing data to it as fast as it can.  As discussed
+above, this can send 4 KiB chunks extremely efficiently, so clients get caught
+up _fast_.
 
-<figure>
-
-![submit I/O](submit_io.svg)
-
-<figcaption>
-
-Jetrelay submits a bunch of `splice()`s to the kernel via an io_uring submission
-queue.  These instruct the kernel to splice the new data from the file into the
-clients' sockets.
-
-</figcaption>
-</figure>
-
-<figure>
-
-![receive an I/O completion](receive_completion.svg)
-
-<figcaption>
-
-We receive a completion for one of the `splice()`s.  The relevant client's
-cursor is moved to its new position.  Client 2 has received the new data and is
-now up-to-date.
-
-</figcaption>
-</figure>
-
-I hope that helps!
-
-</details>
+This section is labelled "not a trick"; but you might say the trick
+is recognising when the easy way is good enough.  If it takes clients
+100ms to connect, who cares?  If we speed it up to 10ms, that doesn't
+buy us anything.[^connecting-in-a-loop]  We could get fancy and keep our
+index in a lock-free deque... but why make life hard for ourselves, eh?
+`Mutex<BTreeMap<Timestamp, Offset>>` does the job.
 
 <!-- ## Storing client state -->
 
@@ -256,62 +300,8 @@ I hope that helps!
 <!-- using a `BTreeMap<ClientId, ClientState>` because it's simple and fast enough. -->
 
 
-## Not a trick: Setting the initial cursor with an index
-
-When clients connect they can specify their initial position, as a timestamp.
-To support this we're going to need and index which translates timestamps to
-byte-offsets in our file.  I'm using a `BTreeMap<Timestamp, Offset>`.[^btreemap]
-
-Remember that we have an "event-writer" thread which receives ATproto events
-from upstream and writes them to the file?  We can give that thread a bit more
-work to do:  for each event, it parses the timestamp, and pushes an entry to the
-index. The index needn't cover _every_ event, so we could do this only every _N_
-events; but it's fast enough, so I just do it every time.
-
-Now, suppose a client connects, requesting data from a certain timestamp
-onwards.  The "client handshake" thread looks up the timestamp in the index.
-The returned value is their initial byte offset.  (Since this index is being
-accessed by multiple threads, I've shoved it in a `Mutex`.[^mutex])
-
-After this, everything Just Works!  To the main runloop, this client just looks
-like it somehow got a long way behind, and it starts `sendfile()`ing data to
-it as fast as it can.  As discussed above, this can send 4 KiB chunks extremely
-efficiently, so clients get caught up _fast_.
-
-Note that this index stuff really only has to be _good enough_.  The
-event-writer thread needs to be able to keep up with the feed, and that's it.
-The client-handshake thread needs to respond within 100ms.  Not hard.  We could
-get fancy and keep our index in a lock-free deque... but why make life hard for
-ourselves, eh?  `Mutex<BTreeMap<_, _>>` does the job.
-
-This section is labelled "not a trick"; but you might say the trick is
-recognising when performance is unimportant.
-
-<!-- There are basically three tasks our program is going to perform: -->
-
-<!-- 1. Accept new client connections and do some handshaking/initialization. -->
-<!-- 2. Receive messages from upstream, process them, and write them to disk. -->
-<!-- 3. Send message data from disk to clients. -->
-
-<!-- Let's discuss performance constraints. -->
-
-<!-- 1. Initializing clients should happen in some _reasonable_ amount of time. -->
-   <!-- Under 100ms, let's say.  Beyond that, there's no point in optimizing it. -->
-<!-- 2. We need to be able to keep up with the messages coming from upstream.  It -->
-   <!-- should have a bit of headroom to allow for growth in ATproto usage.  But -->
-   <!-- beyond that there's no point optimizing this: if we can handle 200x what -->
-   <!-- upstream is throwing at us, that's cool, but it doesn't actually buy us -->
-   <!-- anything. -->
-<!-- 3. Sending data to clients---this is the one that matters.  We're going to push -->
-   <!-- this metric as far as we possibly can.  The more efficiently we can do this, -->
-   <!-- the more clients can connect at the same time before they start falling -->
-   <!-- behind.  This translates directly to saved hardware costs. -->
-
-<!-- Criteria (1) and (2) only need to be _satisfied_.  Once they're ticked off, all -->
-<!-- our effort is going to go into making (3) as fast as we possibly can. -->
-
-
-## Trick #3: Discarding old data with `FALLOC_FL_PUNCH_HOLE`
+Trick #3: Discarding old data with `FALLOC_FL_PUNCH_HOLE`
+---------------------------------------------------------
 
 The final problem we need to solve is discarding old data. With our current
 implementation, the file will grow and grow until we run out of disk space. I'd
@@ -365,7 +355,9 @@ see zeroes if they suddenly started reading again.  New clients will never end
 up in the deallocated region, even if they request an ancient timestamp, because
 we removed those entries from the index.
 
-## Testing it out
+
+Testing it out
+--------------
 
 ### ...against loopback
 
@@ -389,7 +381,7 @@ for the pipe we're using to implement `sendfile()`.  By default, a program can
 only have 1024 file descriptors at a time---that's only 340 clients!  We're
 going to need to raise the fd limit.  The traditional way to do this is using
 `ulimit -n`, but since I'm running jetrelay with systemd anyway I can just set
-`LimitNOFILE=65535` in the unit file.[^fd limit]
+`LimitNOFILE=65535` in the unit file.[^fd_limit]
 
 With that fixed, I connected 20k clients to jetrelay, and they were having no
 problem keeping up with the feed. The total throughput was over 24 Gbps.  Nice!
@@ -422,7 +414,7 @@ Total: 1_914_000 evs, 930 MiB, 7440 Mbps
 
 
 The jetstream feed happened to be fairly quiet when I was doing these tests
-(only around 300 events/second), so even with 6k clients the datarate was only
+(only around 300 events/second), so even with 6k clients the data-rate was only
 7.4 Gbps.
 
 I kept increasing the number of clients.  At 8.5k, it was still keeping them all
@@ -442,7 +434,7 @@ But very soon some of the clients started falling behind:
 Total: 2_396_614 evs, 1255 MiB, 10040 Mbps
 ```
 
-As expected, this happens just as the required datarate exceeds 10 Gbps.  And we
+As expected, this happens just as the required data-rate exceeds 10 Gbps.  And we
 can see that jetrelay is indeed saturating the full 10 Gbps.
 
 ### Finding the limit
@@ -482,18 +474,15 @@ at 9 CPUs.  With 8 cores or fewer it's clearly bottlenecked on CPU.
 ### How does it compare to the official server?
 
 The official jetstream server is architecturally very different to jetrelay.
-Each client has an associated goroutine which performs per-client filtering.
-There are many channels involved.  I think this is all quite conventional for
-golang programs.
+Each client has an "outbox" which buffers outgoing events for that client. When
+a new event arrives, it's immediately copied into the outboxes of all "live"
+clients.  Each client has an associated goroutine which drains the client's
+outbox into its socket (via `write()`).
 
-Another difference is that event data is stored in an LSM-tree (using "pebble",
-an embedded database by the authors of CockroachDB).  Again, this was probably
-done with the filtering use-case in mind.  However, I suspect it lowers the
-performance ceiling somewhat.
-
-We're stress-testing the "no-filtering" case, while the official server is
-clearly optimized for the "lots-of-filtering" case. This is going to be a tough
-test for it.
+Another difference is that event data is stored in an LSM-tree.  I assume this
+is also done with the filtering use-case in mind.  However, I suspect it lowers
+the performance ceiling somewhat.  The data is stored pre-serialized as JSON,
+but the websocket headers are generated fresh every time an event is sent.
 
 So anyway, how does it do?  The server contains some per-IP rate-limiting logic,
 so in order to stress-test it I first had to [surgically remove that
@@ -503,6 +492,10 @@ With that done I went about testing it in the same way as above.  However, I
 wasn't able to get it to exceed 2 Gbps, even with all 50 cores available; and
 the typical throughput was closer to 1 Gbps.  I tried turning up the worker
 count and per-client rate, but didn't observe any difference.
+
+It should be noted that the official server is clearly optimized for the
+"lots-of-filtering" case.  We're stress-testing the "no-filtering" case.  This
+was always going to be a tough test for it.
 
 I did notice something odd however: clients weren't falling behind.  Despite
 the low throughput, all clients continued to observe very recent events.  What's
@@ -525,17 +518,19 @@ implementations.
 
 ## Wrap-up
 
-If you design a system geared specifically for the problem you have and the
-platform you're running on, the sky (or your NIC) is the limit!
+This was my first time writing a blog post.  It's a surprising amount of work!
+Thanks to [Jasper] and [Francesco] for giving me some tips.
 
-<!-- This was my first time writing a blog post.  It's a surprising amount of work! -->
-<!-- Thanks to Jasper van der Jeught and Francesco Mazzolli for giving me some tips. -->
+[Jasper]: https://jaspervdj.be/
+[Francesco]: https://mazzo.li/
+
+<!-- Thanks to Jasper Van der Jeugt and Francesco Mazzoli for giving me some tips. -->
 
 
 ---
 
 <details class="appendix">
-<summary><h2>Appendix: The other 90%</h2></summary>
+<summary><h2 id="appendix-tech-demo">Appendix: The other 90%</h2></summary>
 
 Jetrelay is a tech demo.  Here's a non-exhaustive list of things you'd want
 before running it For Real:
@@ -611,17 +606,20 @@ ATproto is similar!  But it makes some improvements. First: the data structure.
 RSS gives you an append-only list.  ATproto gives you a map from paths to
 records. This means that, as well as creating new entries, you can also edit
 or delete old ones.  What you end up with is a filesystem-like tree of files...
-just like HTTP![^atproto paths]  The fact that the model matches the OG internet
+just like HTTP![^atproto_paths]  The fact that the model matches the OG internet
 means you can expose the same data over HTTP for people who'd rather pull.
 Giving each record an identity (in the form of a path) is also just very useful
 in itself.
 
 The second improvement over RSS is that ATproto records are signed.  This makes
-it impossible for the relay to attribute fake updates to people.  I've never
-heard of RSS aggregators performing this kind of attack, but in theory it's
-possible. Removing trust from the relay is nice because it means you can use
+it impossible for the relay to attribute fake updates to people.  In theory an
+RSS aggregator could perform this kind of attack (though I've never heard of it
+happening).  Note that the opposite attack, where the relay selectively drops
+events, is still possible with ATproto.
+
+Removing trust from the relay is nice because it means you can use
 whatever relay is physically closest without worrying much about about who the
-operator is.[^verify in theory]
+operator is.[^verify_in_theory]
 
 The pull-based internet has HTTP.  The push-based internet has made do with RSS
 for a long time.  A new, more capable standard could be a great development.
@@ -632,24 +630,54 @@ for a long time.  A new, more capable standard could be a great development.
 
 ## Footnotes
 
-[^relay topo]: By chaining relays together, you can quickly fan-out the feed to
+[^relay_topo]: By chaining relays together, you can quickly fan-out the feed to
   a large number of clients.  If you place your relays in strategic locations,
   you can also distribute the feed all around the world with minimal traffic.
 
-[^multicast group]: You create a _multicast group_, which is a special kind of
+[^json-in-json-out]: The official jetstream server consumes the full-fat
+  firehose as its upstream data source, but for simplicity jetrelay uses another
+  jetstream server as its upstream.  JSON in, JSON out.
+
+[^compression]: Another feature offered by the official jetstream server is
+  a zstd-compressed version of the feed.  I didn't add support for this, but
+  adding it would be trivial.
+
+[^encryption]: You might be wondering, "what about encryption?"  For
+  TLS-encrypted (`wss://`) websockets, the bits on the wire _aren't_ the same
+  for all clients.  (If they were, it wouldn't be a very secure encryption
+  method!)  So, this trick does't work for encrypted streams.<br>
+  However!  A server like jetrelay wouldn't normally support TLS natively
+  anyway.  That's because you'd typically be running it behind a reverse proxy
+  (nginx or similar), to support virtual hosts and the like; and at that point
+  you might as well let nginx take care of TLS for you.  So, whether the sockets
+  lead directly to our clients or to nginx, our job is to get unencrypted
+  jetstream data into those sockets as fast as possible.
+
+[^multicast_group]: You create a _multicast group_, which is a special kind of
   socket which you can add subscribers to, and any packet you send to the group
   socket is mirrored to all the subscribers.  It's very convenient!
 
-[^udp caveat 1]: Messages have to fit within a certain size limit defined by the
+[^udp_caveat_1]: Messages have to fit within a certain size limit defined by the
   network.  If you go over 508 bytes, you might find the message gets dropped
   every time.
 
-[^udp caveat 2]: Delivery is unreliable so clients need a way to re-request
+[^udp_caveat_2]: Delivery is unreliable so clients need a way to re-request
   lost packets.
 
-[^reliable multicast]: Although various [reliable
+[^reliable_multicast]: Although various [reliable
   multicast](https://en.wikipedia.org/wiki/Reliable_multicast) protocols do
   exist, none are very popular AFAIK.
+
+[^kafka]: This is a trick I learned from Kafka.
+
+[^threads]: A thread-per-client architecture _could_ be made to work at this
+  scale: 6000 threads is not crazy.  Each thread allocates 8MiB of stack space,
+  but that's not a problem: this memory isn't actually committed until written
+  to.  The main problem is pressure on the scheduler.  With thousands of threads
+  constantly waking up and going to sleep, the rest of the system is going to
+  become quite unresponsive.  I'm sure this is a solvable issue, with a bit of
+  cgroups wizardry...  but I didn't explore far enough to know.  io_uring was
+  just easier than using lots of threads.
 
 [^rustix]: Rustix is a crate which provides Linux's userspace API in a nice
   rusty wrapper.  It's a bit like libc, re-imagined for rust (although in
@@ -658,22 +686,24 @@ for a long time.  A new, more capable standard could be a great development.
    
 [^btreemap]:  Why a `BTreeMap` and not a `HashMap`?  You'll find out in the
   next section!
-   
-[^mutex]: Why a `Mutex` and not a `RWLock`?  An `RWLock` effectively gives
-  priority to readers---in this case, the "client handshake" thread---at the
-  expense of writers---the event writer thread.  That's not what I want.
 
-<!-- [^rpi]: Yes yes I know ARM doesn't have real mode. -->
+[^connecting-in-a-loop]: For clients, connecting is a one-time thing.  Unless
+  they're connecting, reading an event or two, then disconnecting, in a tight
+  loop...  but that's not behaviour I want to encourage!
 
-[^fd limit]: Why use 2**16?  I don't actually know!  But this is the limit I
+[^fd_limit]: Why use 2**16?  I don't actually know!  But this is the limit I
   always see people use.  Perhaps it's just a meme.
 
-[^atproto paths]: ...except that paths use dots as the separator, instead of
+[^atproto_paths]: ...except that paths use dots as the separator, instead of
   slashes... but not the final separator, that one _is_ a slash. 🤷
 
-[^verify in theory]: And I think being able to verify the messages in theory is
+[^verify_in_theory]: And I think being able to verify the messages in theory is
   good enough.  Most clients won't actually bother doing it, but that's fine. So
   long as some clients are checking the relay (and so long as the relay doesn't
   know which clients are checking), any sneaky business risks getting caught.
   This could lead to reputational damage, or even financial damage if the relay
   operator has signed contracts with its users.
+
+</article>
+</body>
+</html>
