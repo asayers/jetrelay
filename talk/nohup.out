@@ -1,0 +1,678 @@
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.754: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.754: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.754: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.754: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.754: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.754: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.754: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.754: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.754: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.754: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.754: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.754: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.754: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.754: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.754: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.754: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:47:43.755: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:16.137: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 10:53:42.477: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
+
+(evince:161930): Gtk-CRITICAL **: 11:07:16.227: gtk_tree_view_expand_row: assertion 'tree_view->priv->model != NULL' failed
