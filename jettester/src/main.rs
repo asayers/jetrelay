@@ -1,6 +1,7 @@
 use anyhow::ensure;
 use bpaf::{Bpaf, Parser};
 use jiff::{Span, Timestamp};
+use rlimit::Resource;
 use std::{
     collections::BTreeMap,
     num::NonZero,
@@ -87,6 +88,9 @@ pub fn main() {
     let states: Vec<_> = std::iter::repeat_with(|| WorkerState { stats: tx.clone() })
         .take(opts.jobs.into())
         .collect();
+
+    let lim = opts.jobs.get() as u64 + 1024;
+    rlimit::setrlimit(Resource::NOFILE, lim, lim * 2).unwrap();
 
     // let start = Instant::now();
     std::thread::scope(|scope| {

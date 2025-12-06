@@ -8,5 +8,6 @@ anyhow = "1.0.97"
 bpaf = { version = "0.9.19", features = ["derive"] }
 gjson = "0.8.1"
 jiff = "0.2.5"
+rlimit = "0.10.2"
 url = "2.5.4"
 wsclient = { version = "0.1.0", path = "../wsclient" }
