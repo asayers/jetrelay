@@ -44,14 +44,17 @@ pub enum ConnectionError {
 pub fn connect_websocket(
     url: &Url,
 ) -> Result<impl Iterator<Item = std::io::Result<Frame>> + Send + 'static, ConnectionError> {
-    let host = url.host().unwrap().to_string();
-    let port = url.port_or_known_default().unwrap();
-    let mut conn = TcpStream::connect((host.as_str(), port))?;
     let tls = match url.scheme() {
         "ws" => false,
         "wss" => true,
-        x => panic!("{x}: Unknown scheme"),
+        _ => panic!("{url}: scheme must be ws:// or wss://"),
     };
+    let host = url
+        .host()
+        .unwrap_or_else(|| panic!("{url}: No host"))
+        .to_string();
+    let port = url.port_or_known_default().unwrap();
+    let mut conn = TcpStream::connect((host.as_str(), port))?;
     use crate::handshake::*;
     let mut buffer = BytesMut::with_capacity(8192);
     let conn: Box<dyn BufRead + Send> = if tls {
