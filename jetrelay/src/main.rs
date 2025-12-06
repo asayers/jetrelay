@@ -4,6 +4,7 @@ mod upstream;
 
 use anyhow::{Context, Result};
 use rustix::fd::AsRawFd;
+use rustix::fs::{MemfdFlags, memfd_create};
 use rustix_uring::IoUring;
 use std::collections::HashMap;
 use std::fs::File;
@@ -32,8 +33,12 @@ fn main() -> Result<()> {
     info!(fd = uring_fd, "Set up the uring");
 
     let var = "RUNTIME_DIRECTORY";
-    let dir: PathBuf = std::env::var(var).context(var)?.into();
-    let file = create_file(&dir, &uring)?;
+    let dir: Option<PathBuf> = match std::env::var(var) {
+        Ok(dir) => Some(dir.into()),
+        Err(std::env::VarError::NotPresent) => None,
+        Err(e) => return Err(e).context(var),
+    };
+    let file = create_file(dir.as_deref(), &uring)?;
     let file_len = Arc::new(AtomicU64::new(0));
 
     // Bind the listener socket.  We do this ASAP, so clients can start
@@ -205,14 +210,19 @@ fn log_init() {
         .init();
 }
 
-fn create_file(dir: &Path, uring: &IoUring) -> Result<File> {
-    let path = dir.join("jetrelay.dat");
-    info!("Creating a file at {}", path.display());
-    let file = File::options()
-        .read(true)
-        .append(true)
-        .create_new(true)
-        .open(path)?;
+fn create_file(dir: Option<&Path>, uring: &IoUring) -> Result<File> {
+    let file = match dir {
+        Some(dir) => {
+            let path = dir.join("jetrelay.dat");
+            info!("Creating a file at {}", path.display());
+            File::options()
+                .read(true)
+                .append(true)
+                .create_new(true)
+                .open(path)?
+        }
+        None => memfd_create("jetrelay.dat", MemfdFlags::CLOEXEC)?.into(),
+    };
     uring
         .submitter()
         .register_files_update(0, &[file.as_raw_fd()])?;
