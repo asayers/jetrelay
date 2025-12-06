@@ -3,11 +3,11 @@ mod io;
 mod upstream;
 
 use anyhow::{Context, Result};
-use rustix::fd::{AsRawFd, OwnedFd};
+use rustix::fd::AsRawFd;
 use rustix_uring::IoUring;
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::prelude::*;
+use std::io::{PipeReader, PipeWriter, prelude::*};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -123,8 +123,8 @@ struct Client {
     bytes_in_pipe: u64,
     copy_in_flight: bool,
     send_in_flight: bool,
-    pipe_rdr: OwnedFd,
-    pipe_wtr: OwnedFd,
+    pipe_rdr: PipeReader,
+    pipe_wtr: PipeWriter,
 }
 
 impl Client {
@@ -159,7 +159,7 @@ impl Client {
             warn!("Interactive mode is not implemented");
         }
 
-        let (pipe_rdr, pipe_wtr) = rustix::pipe::pipe()?;
+        let (pipe_rdr, pipe_wtr) = std::io::pipe()?;
         Ok(Client {
             conn,
             offset,
