@@ -1,5 +1,5 @@
 use crate::upstream::Timestamp;
-use anyhow::{Result, anyhow, ensure};
+use anyhow::{Result, anyhow, bail, ensure};
 use std::io::prelude::*;
 use std::net::TcpStream;
 use tracing::*;
@@ -15,7 +15,7 @@ pub struct ClientConfig {
 }
 
 impl ClientConfig {
-    fn from_query_params(params: &str) -> anyhow::Result<Self> {
+    fn from_query_params(params: &str) -> Result<Self> {
         let mut config = Self {
             cursor: None,
             wanted_collections: vec![],
@@ -54,16 +54,46 @@ pub fn perform_handshake(conn: &mut TcpStream) -> Result<ClientConfig> {
 
         match status {
             httparse::Status::Complete(_) => {
-                let (key, query_params) = validate_request(req)?;
-                send_response(conn, key)?;
-                return ClientConfig::from_query_params(query_params);
+                match validate_request(req).and_then(|(key, query_params)| {
+                    let config = ClientConfig::from_query_params(query_params)?;
+                    validate_config(&config)?;
+                    Ok((key, config))
+                }) {
+                    Ok((key, config)) => {
+                        send_response(conn, key)?;
+                        return Ok(config);
+                    }
+                    Err(e) => {
+                        writeln!(conn, "HTTP/1.1 500 {e:#}\r")?;
+                        writeln!(conn, "\r")?;
+                        conn.flush()?;
+                        conn.shutdown(std::net::Shutdown::Both)?;
+                        return Err(e);
+                    }
+                }
             }
             httparse::Status::Partial => (), // loop
         }
     }
 }
 
-fn validate_request<'b>(req: httparse::Request<'_, 'b>) -> anyhow::Result<(&'b [u8], &'b str)> {
+fn validate_config(config: &ClientConfig) -> Result<()> {
+    if !config.wanted_collections.is_empty()
+        || !config.wanted_dids.is_empty()
+        || config.max_message_size_bytes != usize::MAX
+    {
+        bail!("Support for filtering is not implemented");
+    }
+    if config.compress {
+        bail!("Support for compression is not implemented");
+    }
+    if config.require_hello {
+        bail!("Interactive mode is not implemented");
+    }
+    Ok(())
+}
+
+fn validate_request<'b>(req: httparse::Request<'_, 'b>) -> Result<(&'b [u8], &'b str)> {
     ensure!(
         req.method == Some("GET"),
         "Bad websocket handshake: wrong method"
@@ -97,7 +127,7 @@ fn validate_request<'b>(req: httparse::Request<'_, 'b>) -> anyhow::Result<(&'b [
     Ok((key, query_params))
 }
 
-fn send_response(conn: &mut TcpStream, key: &[u8]) -> anyhow::Result<()> {
+fn send_response(conn: &mut TcpStream, key: &[u8]) -> Result<()> {
     let accept = {
         use base64::prelude::*;
         let magic = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11";

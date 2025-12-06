@@ -151,19 +151,6 @@ impl Client {
             .unwrap_or(file_len.load(Ordering::Acquire));
         info!("Initial offset: {offset}");
 
-        if !config.wanted_collections.is_empty()
-            || !config.wanted_dids.is_empty()
-            || config.max_message_size_bytes != usize::MAX
-        {
-            warn!("Support for filtering is not implemented");
-        }
-        if config.compress {
-            warn!("Support for compression is not implemented");
-        }
-        if config.require_hello {
-            warn!("Interactive mode is not implemented");
-        }
-
         let (pipe_rdr, pipe_wtr) = std::io::pipe()?;
         Ok(Client {
             conn,
