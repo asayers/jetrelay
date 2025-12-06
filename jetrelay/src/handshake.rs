@@ -110,7 +110,7 @@ fn send_response(conn: &mut TcpStream, key: &[u8]) -> anyhow::Result<()> {
     writeln!(conn, "HTTP/1.1 101 Switching Protocols\r")?;
     writeln!(conn, "Connection: Upgrade\r")?;
     writeln!(conn, "Upgrade: websocket\r")?;
-    writeln!(conn, "Server: tailsrv\r")?;
+    writeln!(conn, "Server: jetrelay\r")?;
     writeln!(conn, "Sec-WebSocket-Accept: {accept}\r")?;
     writeln!(conn, "\r")?;
 
