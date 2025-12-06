@@ -25,6 +25,7 @@ struct Opts {
     wait: u64,
     #[bpaf(long, short, argument("TIMES"), fallback(5))]
     retries: usize,
+    dump: bool,
     #[bpaf(positional("URL"))]
     url: Url,
 }
@@ -106,7 +107,7 @@ pub fn main() {
                             }
                         };
                         N_CONNECTED.fetch_add(1, Ordering::Release);
-                        match worker(iter, x) {
+                        match worker(iter, x, opts.dump) {
                             Ok(()) => {
                                 eprintln!("Connection closed by server");
                                 break;
@@ -204,6 +205,7 @@ pub fn main() {
 fn worker(
     iter: impl Iterator<Item = std::io::Result<wsclient::Frame>>,
     x: &WorkerState,
+    dump: bool,
 ) -> anyhow::Result<()> {
     let mut warming_up = 0;
     let mut last_ts_sec = 0;
@@ -222,6 +224,16 @@ fn worker(
         }
         let payload = std::str::from_utf8(frame.payload())?;
         let timestamp = gjson::get(payload, "time_us").u64();
+
+        if dump {
+            let collection = gjson::get(payload, "commit.collection");
+            let text = gjson::get(payload, "commit.record.text");
+            let timestamp = Timestamp::from_microsecond(timestamp as i64).unwrap();
+            println!(
+                "[{timestamp}] {collection} ({} bytes) {text}",
+                payload.len()
+            );
+        }
 
         let ts_sec = timestamp / 1_000_000;
         if ts_sec != last_ts_sec {
