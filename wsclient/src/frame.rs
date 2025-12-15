@@ -1,9 +1,29 @@
-use bytes::{Buf, Bytes};
+use bytes::{Buf, BufMut, Bytes, BytesMut};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Frame<T = Bytes> {
     pub bytes: T,
     pub header_len: usize,
+}
+
+impl Frame {
+    pub fn text(payload: &str) -> Frame {
+        let mut buf = BytesMut::new();
+        buf.put_u8(0b1000_0001); // text
+        match payload.len() {
+            ..126 => buf.put_u8(payload.len() as u8),
+            126..65535 => {
+                buf.put_u8(126);
+                buf.put_u16(payload.len() as u16);
+            }
+            65535.. => {
+                buf.put_u8(127);
+                buf.put_u64(payload.len() as u64);
+            }
+        }
+        buf.extend_from_slice(payload.as_bytes());
+        Frame::from_bytes(&mut buf).unwrap_or_else(|_| panic!())
+    }
 }
 
 impl<T: AsRef<[u8]>> Frame<T> {

@@ -5,6 +5,7 @@ use httparse::Response;
 use rustls::{ClientConfig, ClientConnection, RootCertStore, StreamOwned, pki_types::ServerName};
 use std::io::prelude::*;
 use std::net::TcpStream;
+use std::sync::Arc;
 use url::Url;
 
 pub fn tls_handshake(
@@ -16,7 +17,7 @@ pub fn tls_handshake(
         .with_root_certificates(root_store)
         .with_no_client_auth();
     let server = ServerName::try_from(hostname)?.to_owned();
-    let session = ClientConnection::new(std::sync::Arc::new(config), server)?;
+    let session = ClientConnection::new(Arc::new(config), server)?;
     let stream = StreamOwned::new(session, stream);
     Ok(stream)
 }
