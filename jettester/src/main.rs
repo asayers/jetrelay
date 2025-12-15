@@ -97,6 +97,8 @@ pub fn main() {
     std::thread::scope(|scope| {
         scope.spawn(|| {
             for x in &states {
+                // let slow = i % 2 == 0;
+                let slow = false;
                 let url = &url;
                 scope.spawn(move || {
                     for _ in 0..opts.retries {
@@ -108,7 +110,7 @@ pub fn main() {
                             }
                         };
                         N_CONNECTED.fetch_add(1, Ordering::Release);
-                        match worker(iter, x, opts.dump, false) {
+                        match worker(iter, x, opts.dump, slow) {
                             Ok(()) => {
                                 eprintln!("Connection closed by server");
                                 break;
@@ -197,9 +199,10 @@ pub fn main() {
             }
             let mb = new_bytes / 1024 / 1024;
             println!(
-                "Total this second: {} evs, {} MiB = {} Mbps",
+                "Total this second: {} evs, {} MiB = {} KHz, {} Mbps",
                 new_msgs,
                 mb,
+                new_msgs / 1000,
                 mb * 8
             );
             println!();

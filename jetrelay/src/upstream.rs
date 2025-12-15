@@ -33,14 +33,33 @@ impl std::ops::Sub<Duration> for Timestamp {
 }
 
 pub fn fake_iter() -> impl Iterator<Item = Result<(Frame, Timestamp)>> {
-    std::iter::repeat_with(|| {
-        std::thread::sleep(Duration::from_millis(1));
+    let mut txt = format!(
+        "{{ \"time_us\": {:0>16}, \"padding\": \"{:>65000}\" }}",
+        0, ' '
+    )
+    .into_bytes();
+    let mut prev = Timestamp::now().0 / 1_000_000;
+    let target=  50 /* Hz */;
+    let mut frame = Frame::text(std::str::from_utf8(&txt).unwrap());
+    let mut sent = 0;
+    std::iter::repeat_with(move || {
+        if sent >= target {
+            let sleep = (prev + 1) * 1_000_000 - Timestamp::now().0;
+            std::thread::sleep(Duration::from_micros(sleep));
+        }
         let ts = Timestamp::now();
-        let frame = Frame::text(&format!(
-            "{{ \"time_us\": {}, \"padding\": \"{:>65000}\" }}",
-            ts.0, ' '
-        ));
-        Ok((frame, ts))
+
+        let this = ts.0 / 1_000_000;
+        if this != prev {
+            sent = 0;
+            let mut cursor = std::io::Cursor::new(&mut txt[13..]);
+            write!(cursor, "{:>16}", ts.0)?;
+            frame = Frame::text(std::str::from_utf8(&txt)?);
+        }
+        prev = this;
+
+        sent += 1;
+        Ok((frame.clone(), ts))
     })
 }
 

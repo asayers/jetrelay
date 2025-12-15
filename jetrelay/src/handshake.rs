@@ -61,6 +61,7 @@ pub fn perform_handshake(conn: &mut TcpStream) -> Result<ClientConfig> {
                 }) {
                     Ok((key, config)) => {
                         send_response(conn, key)?;
+                        debug!(cursor = config.cursor.map(|x| x.0), "Handshake complete");
                         return Ok(config);
                     }
                     Err(e) => {

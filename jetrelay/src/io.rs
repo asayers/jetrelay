@@ -1,7 +1,10 @@
-use crate::{Client, ClientId};
+use crate::{
+    BUFFER,
+    client::{ClientId, ClientWithPipe},
+};
 use anyhow::{Result, bail, ensure};
 use io_uring::{cqueue, opcode, squeue};
-use rustix::fd::AsRawFd;
+use rustix::{fd::AsRawFd, pipe::SpliceFlags};
 use slab::Slab;
 use std::io::ErrorKind;
 use tracing::*;
@@ -36,23 +39,25 @@ impl TryFrom<u64> for UserData {
     }
 }
 
-fn fill_pipe(client_id: ClientId, client: &mut Client, len: u32) -> squeue::Entry {
+fn fill_pipe(client_id: ClientId, client: &mut ClientWithPipe, len: u32) -> squeue::Entry {
     let fd_in = io_uring::types::Fixed(0);
     let fd_out = io_uring::types::Fd(client.pipe_wtr.as_raw_fd());
-    let off_in = i64::try_from(client.offset).unwrap();
+    let off_in = i64::try_from(client.inner.offset).unwrap();
     let off_out = -1; // Pipes don't have offsets
     opcode::Splice::new(fd_in, off_in, fd_out, off_out, len)
+        .flags(SpliceFlags::NONBLOCK.bits())
         .build()
         .user_data(UserData::FillPipe(client_id).into())
 }
 
-fn drain_pipe(client_id: ClientId, client: &mut Client) -> squeue::Entry {
+fn drain_pipe(client_id: ClientId, client: &mut ClientWithPipe) -> squeue::Entry {
     let fd_in = io_uring::types::Fd(client.pipe_rdr.as_raw_fd());
-    let fd_out = io_uring::types::Fd(client.conn.as_raw_fd());
+    let fd_out = io_uring::types::Fd(client.inner.conn.as_raw_fd());
     let off_in = -1; // Pipes don't have offsets
     let off_out = -1; // Sockets don't have offsets
     let len = u32::MAX; // As much as possible (note: the op will return an error)
     opcode::Splice::new(fd_in, off_in, fd_out, off_out, len)
+        .flags(SpliceFlags::NONBLOCK.bits())
         .build()
         .user_data(UserData::DrainPipe(client_id).into())
 }
@@ -80,11 +85,13 @@ pub fn get_client_caught_up(
     sqes: &mut Vec<squeue::Entry>,
     file_len: u64,
     client_id: ClientId,
-    client: &mut Client,
+    client: &mut ClientWithPipe,
 ) -> Result<()> {
     let _g = debug_span!("", client_id).entered();
-    if !client.copy_in_flight && client.offset < file_len {
-        let n_bytes = u32::try_from(file_len - client.offset).unwrap();
+    let n_pages = file_len / BUFFER;
+    let sent_pages = client.inner.offset / BUFFER;
+    if !client.copy_in_flight && sent_pages < n_pages {
+        let n_bytes = u32::try_from((n_pages - sent_pages) * BUFFER).unwrap();
         debug!("Copying {n_bytes} bytes into the pipe");
         sqes.push(fill_pipe(client_id, client, n_bytes));
         client.copy_in_flight = true;
@@ -97,44 +104,55 @@ pub fn get_client_caught_up(
     Ok(())
 }
 
-pub fn handle_completion(clients: &mut Slab<Client>, cqe: cqueue::Entry) -> Result<()> {
+pub fn handle_completion(clients: &mut Slab<ClientWithPipe>, cqe: cqueue::Entry) -> Result<()> {
     let user_data = UserData::try_from(cqe.user_data())?;
     let result = cqe.result();
     debug!("{user_data:?} completed with {result:?}");
-    let (client_id, was_fill) = match user_data {
-        UserData::FillPipe(client_id) => (client_id, true),
-        UserData::DrainPipe(client_id) => (client_id, false),
+    let client_id = match user_data {
+        UserData::FillPipe(client_id) => client_id,
+        UserData::DrainPipe(client_id) => client_id,
     };
     let _g = info_span!("", client_id).entered();
-    if matches!(result, Err(Errno::PIPE | Errno::CONNRESET | Errno::BADF)) {
-        if was_fill {
-            // This happens when the client is gone
-            assert!(clients.get_mut(client_id as usize).is_none());
-            return Ok(());
-        } else {
-            info!("Socket closed by other side");
-            let client = clients.try_remove(client_id as usize);
-            ensure!(client.is_some(), "Two hangups for the same client?");
+    let bytes_written = match result {
+        Ok(x) => x as u64,
+        Err(e)
+            if matches!(e.kind(), ErrorKind::BrokenPipe | ErrorKind::ConnectionReset)
+                || e.raw_os_error() == Some(9) =>
+        {
+            match user_data {
+                UserData::FillPipe(_) => {
+                    // This happens when the client is gone
+                    assert!(clients.get_mut(client_id as usize).is_none());
+                }
+                UserData::DrainPipe(_) => {
+                    info!("Socket closed by other side");
+                    let client = clients.try_remove(client_id as usize);
+                    ensure!(client.is_some(), "Two hangups for the same client?");
+                }
+            }
             return Ok(());
         }
-    }
+        Err(e) => return Err(e.into()),
+    };
     let Some(client) = clients.get_mut(client_id as usize) else {
         warn!("Got an IO completion but the client is gone");
         return Ok(());
     };
-    let bytes_written = u64::from(result?);
-    if was_fill {
-        ensure!(client.copy_in_flight);
-        client.copy_in_flight = false;
-        ensure!(bytes_written != 0);
-        client.bytes_in_pipe += bytes_written;
-        client.offset += bytes_written;
-    } else {
-        ensure!(client.send_in_flight);
-        client.send_in_flight = false;
-        ensure!(bytes_written != 0);
-        debug!("Sent {bytes_written} bytes to client");
-        client.bytes_in_pipe -= bytes_written;
+    match user_data {
+        UserData::FillPipe(_) => {
+            ensure!(client.copy_in_flight);
+            client.copy_in_flight = false;
+            ensure!(bytes_written != 0);
+            client.bytes_in_pipe += bytes_written;
+            client.inner.offset += bytes_written;
+        }
+        UserData::DrainPipe(_) => {
+            ensure!(client.send_in_flight);
+            client.send_in_flight = false;
+            ensure!(bytes_written != 0);
+            debug!("Sent {bytes_written} bytes to client");
+            client.bytes_in_pipe -= bytes_written;
+        }
     }
     Ok(())
 }

@@ -1,22 +1,19 @@
+mod client;
 mod handshake;
+mod impl_1; // thread-per-client, write() blocking
+mod impl_2; // vec, write(), nonblocking
+mod impl_3; // memfd, sendfile(), nonblocking
+mod impl_4; // memfd, splice(), nonblocking
+mod impl_5; // memfd, io_uring
+mod impl_6; // vec, send_zc(), nonblocking
 mod io;
 mod upstream;
 
-use anyhow::{Context, Result, ensure};
-use io_uring::IoUring;
-use io_uring::types::Timespec;
-use rustix::fd::AsRawFd;
-use rustix::fs::{MemfdFlags, memfd_create};
-use slab::Slab;
-use std::fs::File;
-use std::io::{PipeReader, PipeWriter, prelude::*};
-use std::net::{SocketAddr, TcpListener, TcpStream};
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::mpsc::Sender;
-use tracing::*;
+use anyhow::{Result, bail};
+use tracing::Level;
 use tracing_subscriber::{EnvFilter, prelude::*};
+
+pub const BUFFER: u64 = 4096;
 
 /// Respects the following env vars:
 ///
@@ -26,171 +23,16 @@ use tracing_subscriber::{EnvFilter, prelude::*};
 /// * RUST_LOG
 fn main() -> Result<()> {
     log_init();
-
-    // Set up the uring
-    let mut uring = IoUring::new(1024)?;
-    uring.submitter().register_files_sparse(1)?;
-    let uring_fd = uring.as_raw_fd();
-    info!(fd = uring_fd, "Set up the uring");
-
-    let var = "RUNTIME_DIRECTORY";
-    let dir: Option<PathBuf> = match std::env::var(var) {
-        Ok(dir) => Some(dir.into()),
-        Err(std::env::VarError::NotPresent) => None,
-        Err(e) => return Err(e).context(var),
-    };
-    let file = create_file(dir.as_deref(), &uring)?;
-    let file_len = Arc::new(AtomicU64::new(0));
-
-    // Bind the listener socket.  We do this ASAP, so clients can start
-    // connecting immediately. It's fine for them to connect even before the
-    // file exists.  Of course, they won't recieve any data until it _does_
-    // exist.
-    let var = "JETRELAY_PORT";
-    let port: u16 = std::env::var(var).context(var)?.parse().context(var)?;
-    let listen_addr = SocketAddr::new([0, 0, 0, 0].into(), port);
-    let listener = TcpListener::bind(listen_addr)?;
-    info!(%listen_addr, "Bound socket");
-
-    // Handle incoming client connections in a separate thread
-    let (client_tx, client_rx) = std::sync::mpsc::channel();
-    let file_len_2 = file_len.clone();
-    std::thread::Builder::new()
-        .name("client_listener".to_owned())
-        .spawn(move || listen_for_clients(listener, client_tx, file_len_2))?;
-
-    let mut clients = Slab::<Client>::default();
-
-    let var = "UPSTREAM_URL";
-    let url = std::env::var(var).context(var)?.parse().context(var)?;
-    let ws_iter = wsclient::connect_websocket(&url)?;
-    info!("Connected to upstream");
-    let file_len_2 = file_len.clone();
-    std::thread::Builder::new()
-        .name("upstream_copier".to_owned())
-        .spawn(move || crate::upstream::copy_frames_to_file(file, file_len_2, ws_iter).unwrap())?;
-
-    let mut sqes = Vec::new();
-
-    info!("Starting runloop");
-    loop {
-        while let Ok(client) = client_rx.try_recv() {
-            let client_id = clients.insert(client);
-            ensure!(client_id < u32::MAX as usize);
-            info!(client_id, "Client registered");
-        }
-        for cqe in uring.completion() {
-            crate::io::handle_completion(&mut clients, cqe).context("handle_completion")?;
-        }
-        let file_len = file_len.load(Ordering::Acquire);
-        for (client_id, client) in &mut clients {
-            crate::io::get_client_caught_up(&mut sqes, file_len, client_id as u32, client)
-                .context("get_client_caught_up")?;
-        }
-        {
-            let mut sq = uring.submission();
-            let limit = (sq.capacity() - sq.len()).min(sqes.len());
-            unsafe { sq.push_multiple(&sqes[..limit]).context("push_multiple")? };
-            sqes.drain(..limit);
-        }
-        trace!("(Waiting for completions...)");
-        const RUNLOOP_TIMEOUT: Timespec = Timespec::new().sec(1);
-        let submit_args = io_uring::types::SubmitArgs::new().timespec(&RUNLOOP_TIMEOUT);
-        match uring.submitter().submit_with_args(1, &submit_args) {
-            Ok(_) => (),
-            Err(e) => match e.raw_os_error() {
-                Some(62) => (), // Timeout
-                _ => return Err(anyhow::anyhow!(e).context("submit")),
-            },
-        }
+    match std::env::var("IMPL").as_ref().map(|x| x.as_str()) {
+        Ok("1") => crate::impl_1::run(),
+        Ok("2") => crate::impl_2::run(),
+        Ok("3") => crate::impl_3::run(),
+        Ok("4") => crate::impl_4::run(),
+        Ok("5") => crate::impl_5::run(),
+        Ok("6") => crate::impl_6::run(),
+        Ok(x) => bail!("{x}: Unknown impl"),
+        Err(_) => crate::impl_5::run(),
     }
-}
-
-fn listen_for_clients(listener: TcpListener, client_tx: Sender<Client>, file_len: Arc<AtomicU64>) {
-    std::thread::scope(|scope| {
-        let _g = info_span!("client listener thread").entered();
-        info!(socket = ?listener, "Listening for client connections");
-        for conn in listener.incoming() {
-            std::thread::Builder::new()
-                .name("client_handshake".to_owned())
-                .spawn_scoped(scope, || {
-                    let _g = debug_span!("handshake thread").entered();
-                    match init_client(&client_tx, conn, &file_len) {
-                        Ok(()) => (),
-                        Err(e) => error!("{e}"),
-                    }
-                })
-                .unwrap();
-        }
-        error!("Listening socket was closed!");
-        std::process::exit(1);
-    });
-}
-
-type ClientId = u32;
-
-#[derive(Debug)]
-struct Client {
-    conn: TcpStream,
-    offset: u64,
-    bytes_in_pipe: u64,
-    copy_in_flight: bool,
-    send_in_flight: bool,
-    pipe_rdr: PipeReader,
-    pipe_wtr: PipeWriter,
-}
-
-impl Client {
-    fn new(mut conn: TcpStream, file_len: &AtomicU64) -> Result<Client> {
-        let peer_addr = conn.peer_addr()?;
-        let local_addr = conn.local_addr()?;
-        info!(
-            %peer_addr,
-            %local_addr,
-            "New client connected",
-        );
-
-        let config = crate::handshake::perform_handshake(&mut conn)?;
-        info!(cursor = config.cursor.map(|x| x.0), "Handshake complete");
-
-        let offset = config
-            .cursor
-            .and_then(crate::upstream::resolve_cursor)
-            .unwrap_or(file_len.load(Ordering::Acquire));
-        info!("Initial offset: {offset}");
-
-        let (pipe_rdr, pipe_wtr) = std::io::pipe()?;
-        Ok(Client {
-            conn,
-            offset,
-            bytes_in_pipe: 0,
-            copy_in_flight: false,
-            send_in_flight: false,
-            pipe_rdr,
-            pipe_wtr,
-        })
-    }
-}
-
-impl Drop for Client {
-    fn drop(&mut self) {
-        trace!("Sending close frame to client");
-        let close_frame = [0x88, 0x02, 0x03, 0xE8];
-        let _ = self.conn.write_all(&close_frame);
-        let _ = self.conn.flush();
-        let _ = self.conn.shutdown(std::net::Shutdown::Both);
-    }
-}
-
-fn init_client(
-    client_tx: &Sender<Client>,
-    conn: std::io::Result<TcpStream>,
-    file_len: &AtomicU64,
-) -> Result<()> {
-    let client = Client::new(conn?, file_len)?;
-    client_tx.send(client)?;
-    // We could wake up the io_uring here... but we don't bother
-    Ok(())
 }
 
 /// Respect `RUST_LOG`, falling back to INFO-level
@@ -203,24 +45,4 @@ fn log_init() {
         .with(filter)
         .with(writer)
         .init();
-}
-
-fn create_file(dir: Option<&Path>, uring: &IoUring) -> Result<File> {
-    let file = match dir {
-        Some(dir) => {
-            let path = dir.join("jetrelay.dat");
-            info!("Creating a file at {}", path.display());
-            File::options()
-                .read(true)
-                .append(true)
-                .create_new(true)
-                .open(path)?
-        }
-        None => memfd_create("jetrelay.dat", MemfdFlags::CLOEXEC)?.into(),
-    };
-    uring
-        .submitter()
-        .register_files_update(0, &[file.as_raw_fd()])?;
-    debug!("Registered file with the uring");
-    Ok(file)
 }
