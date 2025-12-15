@@ -30,6 +30,7 @@ struct Opts {
     url: Url,
 }
 
+#[derive(Clone)]
 struct WorkerState {
     stats: mpsc::Sender<SecondStats>,
     // timestamp: AtomicU64,
@@ -60,7 +61,7 @@ struct SecondStats {
 //     }
 // }
 
-#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 struct MsgStats {
     n_msgs: usize,
     n_bytes: usize,
@@ -86,9 +87,8 @@ pub fn main() {
         url.query_pairs_mut().append_pair("wantedCollections", c);
     }
     let (tx, rx) = mpsc::channel();
-    let states: Vec<_> = std::iter::repeat_with(|| WorkerState { stats: tx.clone() })
-        .take(opts.jobs.into())
-        .collect();
+    let states: Vec<_> =
+        std::iter::repeat_n(WorkerState { stats: tx.clone() }, opts.jobs.into()).collect();
 
     let lim = opts.jobs.get() as u64 + 1024;
     rlimit::setrlimit(Resource::NOFILE, lim, lim * 2).unwrap();
@@ -97,9 +97,10 @@ pub fn main() {
     std::thread::scope(|scope| {
         scope.spawn(|| {
             for x in &states {
-                scope.spawn(|| {
+                let url = &url;
+                scope.spawn(move || {
                     for _ in 0..opts.retries {
-                        let iter = match wsclient::connect_websocket(&url) {
+                        let iter = match wsclient::connect_websocket(url) {
                             Ok(x) => x,
                             Err(e) => {
                                 eprintln!("Connection error: {e:#}");
@@ -107,7 +108,7 @@ pub fn main() {
                             }
                         };
                         N_CONNECTED.fetch_add(1, Ordering::Release);
-                        match worker(iter, x, opts.dump) {
+                        match worker(iter, x, opts.dump, false) {
                             Ok(()) => {
                                 eprintln!("Connection closed by server");
                                 break;
@@ -121,8 +122,7 @@ pub fn main() {
                 std::thread::sleep(Duration::from_millis(opts.wait));
             }
         });
-        // let mut global_stats = BTreeMap::<u64, (usize, MsgStats)>::new();
-        let mut global_stats = BTreeMap::<u64, BTreeMap<MsgStats, usize>>::new();
+        let mut global_stats = BTreeMap::<u64, (usize, MsgStats)>::new();
         loop {
             // let mut oldest_ts = u64::MAX;
             // let mut total_count = 0;
@@ -177,24 +177,31 @@ pub fn main() {
                 new_msgs += x.stats.n_msgs;
                 new_bytes += x.stats.n_bytes;
                 oldest_ts = oldest_ts.min(x.second);
-                let second_stats = global_stats.entry(x.second).or_default();
-                let n = second_stats.entry(x.stats).or_default();
+                let (n, stats) = global_stats.entry(x.second).or_insert((0, x.stats));
+                assert_eq!(*stats, x.stats);
                 *n += 1;
             }
 
-            for (second, xs) in global_stats.range(oldest_ts..) {
-                let d = *second as i64 - Timestamp::now().as_second();
-                for (stats, n) in xs {
+            for second in (oldest_ts - 1)..(Timestamp::now().as_second() as u64) {
+                let d = second as i64 - Timestamp::now().as_second();
+                if let Some((n, stats)) = global_stats.get(&second) {
                     println!(
-                        "T{d:+}s {:#x} x{n} ({} evs, {} KiB)",
+                        "[{second}] T{d:+}s {:#x} ({} evs, {} KiB) x{n}",
                         stats.hash,
                         stats.n_msgs,
                         stats.n_bytes / 1024,
                     );
+                } else {
+                    println!("[{second}] T{d:+}s 0x0000000000000000 (??? evs, ??? KiB) x0");
                 }
             }
             let mb = new_bytes / 1024 / 1024;
-            println!("Total: {} evs, {} MiB = {} Mbps", new_msgs, mb, mb * 8);
+            println!(
+                "Total this second: {} evs, {} MiB = {} Mbps",
+                new_msgs,
+                mb,
+                mb * 8
+            );
             println!();
 
             std::thread::sleep(Duration::from_secs(1));
@@ -206,6 +213,7 @@ fn worker(
     iter: impl Iterator<Item = std::io::Result<wsclient::Frame>>,
     x: &WorkerState,
     dump: bool,
+    slow: bool,
 ) -> anyhow::Result<()> {
     let mut warming_up = 0;
     let mut last_ts_sec = 0;
@@ -250,9 +258,12 @@ fn worker(
         }
         stats.n_bytes += frame.bytes.len();
         stats.n_msgs += 1;
-        // for bytes in frame.payload().chunks_exact(8) {
-        //     stats.hash ^= u64::from_le_bytes(bytes.try_into().unwrap());
-        // }
+        for bytes in frame.payload().chunks_exact(8) {
+            stats.hash ^= u64::from_le_bytes(bytes.try_into().unwrap());
+        }
+        if slow {
+            std::thread::sleep(Duration::from_millis(10));
+        }
     }
     Ok(())
 }
