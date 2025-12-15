@@ -1,10 +1,9 @@
 use crate::{Client, ClientId};
 use anyhow::{Result, bail, ensure};
+use io_uring::{cqueue, opcode, squeue};
 use rustix::fd::AsRawFd;
-use rustix::io::Errno;
-use rustix::io_uring::io_uring_user_data;
-use rustix_uring::{cqueue, opcode, squeue, types::Timespec};
 use std::collections::HashMap;
+use std::io::ErrorKind;
 use tracing::*;
 
 /// A kind of cookie which you can attach to io_uring submissions, which allows
@@ -17,20 +16,19 @@ enum UserData {
     DrainPipe(ClientId),
 }
 
-impl From<UserData> for io_uring_user_data {
+impl From<UserData> for u64 {
     fn from(value: UserData) -> Self {
-        io_uring_user_data::from_u64(match value {
+        match value {
             UserData::Timeout => 0 << 32,
             UserData::FillPipe(id) => (1 << 32) | id as u64,
             UserData::DrainPipe(id) => (2 << 32) | id as u64,
-        })
+        }
     }
 }
 
-impl TryFrom<io_uring_user_data> for UserData {
+impl TryFrom<u64> for UserData {
     type Error = anyhow::Error;
-    fn try_from(value: io_uring_user_data) -> Result<Self, Self::Error> {
-        let value = value.u64_();
+    fn try_from(value: u64) -> Result<Self, Self::Error> {
         match value >> 32 {
             0 => Ok(UserData::Timeout),
             1 => Ok(UserData::FillPipe(value as u32)),
@@ -44,28 +42,28 @@ pub fn timeout() -> squeue::Entry {
     const RUNLOOP_TIMEOUT: Timespec = Timespec::new().nsec(100_000_000); // 100 ms
     opcode::Timeout::new(&RUNLOOP_TIMEOUT)
         .build()
-        .user_data(UserData::Timeout)
+        .user_data(UserData::Timeout.into())
 }
 
 fn fill_pipe(client_id: ClientId, client: &mut Client, len: u32) -> squeue::Entry {
-    let fd_in = rustix_uring::types::Fixed(0);
-    let fd_out = rustix_uring::types::Fd(client.pipe_wtr.as_raw_fd());
+    let fd_in = io_uring::types::Fixed(0);
+    let fd_out = io_uring::types::Fd(client.pipe_wtr.as_raw_fd());
     let off_in = i64::try_from(client.offset).unwrap();
     let off_out = -1; // Pipes don't have offsets
     opcode::Splice::new(fd_in, off_in, fd_out, off_out, len)
         .build()
-        .user_data(UserData::FillPipe(client_id))
+        .user_data(UserData::FillPipe(client_id).into())
 }
 
 fn drain_pipe(client_id: ClientId, client: &mut Client) -> squeue::Entry {
-    let fd_in = rustix_uring::types::Fd(client.pipe_rdr.as_raw_fd());
-    let fd_out = rustix_uring::types::Fd(client.conn.as_raw_fd());
+    let fd_in = io_uring::types::Fd(client.pipe_rdr.as_raw_fd());
+    let fd_out = io_uring::types::Fd(client.conn.as_raw_fd());
     let off_in = -1; // Pipes don't have offsets
     let off_out = -1; // Sockets don't have offsets
     let len = u32::MAX; // As much as possible (note: the op will return an error)
     opcode::Splice::new(fd_in, off_in, fd_out, off_out, len)
         .build()
-        .user_data(UserData::DrainPipe(client_id))
+        .user_data(UserData::DrainPipe(client_id).into())
 }
 
 /// Issue IOs for a single client

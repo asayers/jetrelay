@@ -3,9 +3,9 @@ mod io;
 mod upstream;
 
 use anyhow::{Context, Result};
+use io_uring::IoUring;
 use rustix::fd::AsRawFd;
 use rustix::fs::{MemfdFlags, memfd_create};
-use rustix_uring::IoUring;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{PipeReader, PipeWriter, prelude::*};
@@ -90,8 +90,11 @@ fn main() -> Result<()> {
                 .context("get_client_caught_up")?;
         }
         sqes.push(crate::io::timeout());
-        unsafe {
-            uring.submit_all(sqes.drain(..)).context("submit_all")?;
+        {
+            let mut sq = uring.submission();
+            let limit = (sq.capacity() - sq.len()).min(sqes.len());
+            unsafe { sq.push_multiple(&sqes[..limit]).context("push_multiple")? };
+            sqes.drain(..limit);
         }
         trace!("(Waiting for completions...)");
         uring.submit_and_wait(1).context("submit_and_wait")?;

@@ -402,6 +402,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "io-uring"
+version = "0.7.11"
+source = "git+https://github.com/asayers/io-uring.git?branch=entry-result#02107a797c599feb1b3b5857ecaf196d27b6a87e"
+dependencies = [
+ "bitflags",
+ "cfg-if",
+ "libc",
+]
+
+[[package]]
 name = "itertools"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -429,8 +439,8 @@ dependencies = [
  "base64",
  "gjson",
  "httparse",
+ "io-uring",
  "rustix 1.0.5",
- "rustix-uring",
  "sha1_smol",
  "tracing",
  "tracing-subscriber",
@@ -802,15 +812,6 @@ dependencies = [
  "libc",
  "linux-raw-sys 0.9.4",
  "windows-sys 0.59.0",
-]
-
-[[package]]
-name = "rustix-uring"
-version = "0.6.0"
-source = "git+https://github.com/asayers/rustix-uring?branch=submit-all#2042e70ed7a4f432e04c8cf3a403d33f724095aa"
-dependencies = [
- "bitflags",
- "rustix 1.0.5",
 ]
 
 [[package]]
