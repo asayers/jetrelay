@@ -11,17 +11,16 @@ use tracing::*;
 /// to be encoded as a u64.
 #[derive(Debug, PartialEq)]
 enum UserData {
-    Timeout,
     FillPipe(ClientId),
     DrainPipe(ClientId),
 }
 
 impl From<UserData> for u64 {
     fn from(value: UserData) -> Self {
+        #[allow(clippy::identity_op)]
         match value {
-            UserData::Timeout => 0 << 32,
-            UserData::FillPipe(id) => (1 << 32) | id as u64,
-            UserData::DrainPipe(id) => (2 << 32) | id as u64,
+            UserData::FillPipe(id) => (0 << 32) | id as u64,
+            UserData::DrainPipe(id) => (1 << 32) | id as u64,
         }
     }
 }
@@ -30,19 +29,11 @@ impl TryFrom<u64> for UserData {
     type Error = anyhow::Error;
     fn try_from(value: u64) -> Result<Self, Self::Error> {
         match value >> 32 {
-            0 => Ok(UserData::Timeout),
-            1 => Ok(UserData::FillPipe(value as u32)),
-            2 => Ok(UserData::DrainPipe(value as u32)),
+            0 => Ok(UserData::FillPipe(value as u32)),
+            1 => Ok(UserData::DrainPipe(value as u32)),
             x => bail!("{value:x}: Unknown user data: {x}"),
         }
     }
-}
-
-pub fn timeout() -> squeue::Entry {
-    const RUNLOOP_TIMEOUT: Timespec = Timespec::new().nsec(100_000_000); // 100 ms
-    opcode::Timeout::new(&RUNLOOP_TIMEOUT)
-        .build()
-        .user_data(UserData::Timeout.into())
 }
 
 fn fill_pipe(client_id: ClientId, client: &mut Client, len: u32) -> squeue::Entry {
@@ -114,7 +105,6 @@ pub fn handle_completion(
     let result = cqe.result();
     debug!("{user_data:?} completed with {result:?}");
     let (client_id, was_fill) = match user_data {
-        UserData::Timeout => return Ok(()),
         UserData::FillPipe(client_id) => (client_id, true),
         UserData::DrainPipe(client_id) => (client_id, false),
     };

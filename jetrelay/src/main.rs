@@ -4,6 +4,7 @@ mod upstream;
 
 use anyhow::{Context, Result};
 use io_uring::IoUring;
+use io_uring::types::Timespec;
 use rustix::fd::AsRawFd;
 use rustix::fs::{MemfdFlags, memfd_create};
 use std::collections::HashMap;
@@ -89,7 +90,6 @@ fn main() -> Result<()> {
             crate::io::get_client_caught_up(&mut sqes, file_len, *client_id, client)
                 .context("get_client_caught_up")?;
         }
-        sqes.push(crate::io::timeout());
         {
             let mut sq = uring.submission();
             let limit = (sq.capacity() - sq.len()).min(sqes.len());
@@ -97,7 +97,15 @@ fn main() -> Result<()> {
             sqes.drain(..limit);
         }
         trace!("(Waiting for completions...)");
-        uring.submit_and_wait(1).context("submit_and_wait")?;
+        const RUNLOOP_TIMEOUT: Timespec = Timespec::new().sec(1);
+        let submit_args = io_uring::types::SubmitArgs::new().timespec(&RUNLOOP_TIMEOUT);
+        match uring.submitter().submit_with_args(1, &submit_args) {
+            Ok(_) => (),
+            Err(e) => match e.raw_os_error() {
+                Some(62) => (), // Timeout
+                _ => return Err(anyhow::anyhow!(e).context("submit")),
+            },
+        }
     }
 }
 
