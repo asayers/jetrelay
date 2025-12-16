@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow = "1.0.97"
-bpaf = { version = "0.9.19", features = ["derive"] }
+anyhow = "1.0.100"
+bpaf = { version = "0.9.20", features = ["derive"] }
 gjson = "0.8.1"
-jiff = "0.2.5"
+jiff = "0.2.16"
 rlimit = "0.10.2"
-url = "2.5.4"
+url = "2.5.7"
 wsclient = { version = "0.1.0", path = "../wsclient" }
