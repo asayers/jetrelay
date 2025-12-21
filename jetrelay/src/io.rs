@@ -2,7 +2,7 @@ use crate::{Client, ClientId};
 use anyhow::{Result, bail, ensure};
 use io_uring::{cqueue, opcode, squeue};
 use rustix::fd::AsRawFd;
-use std::collections::HashMap;
+use slab::Slab;
 use std::io::ErrorKind;
 use tracing::*;
 
@@ -97,10 +97,7 @@ pub fn get_client_caught_up(
     Ok(())
 }
 
-pub fn handle_completion(
-    clients: &mut HashMap<ClientId, Client>,
-    cqe: cqueue::Entry,
-) -> Result<()> {
+pub fn handle_completion(clients: &mut Slab<Client>, cqe: cqueue::Entry) -> Result<()> {
     let user_data = UserData::try_from(cqe.user_data())?;
     let result = cqe.result();
     debug!("{user_data:?} completed with {result:?}");
@@ -112,16 +109,16 @@ pub fn handle_completion(
     if matches!(result, Err(Errno::PIPE | Errno::CONNRESET | Errno::BADF)) {
         if was_fill {
             // This happens when the client is gone
-            assert!(clients.get_mut(&client_id).is_none());
+            assert!(clients.get_mut(client_id as usize).is_none());
             return Ok(());
         } else {
             info!("Socket closed by other side");
-            let client = clients.remove(&client_id);
+            let client = clients.try_remove(client_id as usize);
             ensure!(client.is_some(), "Two hangups for the same client?");
             return Ok(());
         }
     }
-    let Some(client) = clients.get_mut(&client_id) else {
+    let Some(client) = clients.get_mut(client_id as usize) else {
         warn!("Got an IO completion but the client is gone");
         return Ok(());
     };

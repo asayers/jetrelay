@@ -2,12 +2,12 @@ mod handshake;
 mod io;
 mod upstream;
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, ensure};
 use io_uring::IoUring;
 use io_uring::types::Timespec;
 use rustix::fd::AsRawFd;
 use rustix::fs::{MemfdFlags, memfd_create};
-use std::collections::HashMap;
+use slab::Slab;
 use std::fs::File;
 use std::io::{PipeReader, PipeWriter, prelude::*};
 use std::net::{SocketAddr, TcpListener, TcpStream};
@@ -59,8 +59,7 @@ fn main() -> Result<()> {
         .name("client_listener".to_owned())
         .spawn(move || listen_for_clients(listener, client_tx, file_len_2))?;
 
-    let mut clients = HashMap::<ClientId, Client>::default();
-    let mut next_client_id = 0;
+    let mut clients = Slab::<Client>::default();
 
     let var = "UPSTREAM_URL";
     let url = std::env::var(var).context(var)?.parse().context(var)?;
@@ -76,18 +75,16 @@ fn main() -> Result<()> {
     info!("Starting runloop");
     loop {
         while let Ok(client) = client_rx.try_recv() {
-            let client_id = next_client_id;
-            next_client_id += 1;
-            let _g = info_span!("", client_id).entered();
-            clients.insert(client_id, client);
-            info!("Client registered");
+            let client_id = clients.insert(client);
+            ensure!(client_id < u32::MAX as usize);
+            info!(client_id, "Client registered");
         }
         for cqe in uring.completion() {
             crate::io::handle_completion(&mut clients, cqe).context("handle_completion")?;
         }
         let file_len = file_len.load(Ordering::Acquire);
         for (client_id, client) in &mut clients {
-            crate::io::get_client_caught_up(&mut sqes, file_len, *client_id, client)
+            crate::io::get_client_caught_up(&mut sqes, file_len, client_id as u32, client)
                 .context("get_client_caught_up")?;
         }
         {

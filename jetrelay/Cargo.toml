@@ -11,6 +11,7 @@ httparse = "1.10.1"
 io-uring = { git = "https://github.com/asayers/io-uring.git", branch = "entry-result", version = "0.7.11" }
 rustix = { version = "1.0.3", features = ["fs"] }
 sha1_smol = "1.0.1"
+slab = "0.4.11"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 wsclient = { version = "0.1.0", path = "../wsclient" }
