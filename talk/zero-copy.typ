@@ -37,6 +37,136 @@ If you're ever used the "bytes" crate this may look familiar
 #small[There's also an optimization which allows very small fragments to be
 inlined into the skb]
 
+== write()
+
+#align(center, image("zerocopy_1.svg", height: 80%))
+---
+#speaker-note[
+    Now we send the same data to multiple clients, which each have their own
+    send queue...
+]
+#align(center, image("zerocopy_2.svg", height: 80%))
+#speaker-note[...but look at all these copies!]
+---
+#align(center, image("zerocopy_3.svg", height: 80%))
+#speaker-note[
+    _This_ is what we want - one copy, lots of references to the same data.  But
+    the problem is there's no way to refer to _this_ (the fragment) when calling
+    `write()`.
+]
+
+== What we want is...
+
+...a kernel-owned buffer
+
+...that will survive across multiple `write()`s
+
+...with some kind of handle to refer to it from userspace
+
+#speaker-note[
+    What could this "handle" possibly be?
+    Well, in Linux, handles are known as "file descriptors".
+    and indeed, we have something called...
+]
+
+== memfd
+
+#pause
+
+#table(
+columns: (0.5fr, 1fr, 1fr),
+table.header([],
+[*memfd*],
+[*Vec\<u8\>*],
+),
+[Create],
+[`memfd_create()`],
+[`Vec::new()`],
+[Append],
+[`write()`],
+[`extend()`],
+[Modify],
+[`pwrite()`],
+[`copy_from_slice()`],
+[Resize],
+[`ftruncate()`],
+[`resize()`],
+[Free],
+[`close()`],
+[`mem::drop()`],
+)
+
+#speaker-note[
+    You can push bytes on the end, causing it to grow
+    You can modify existing bytes
+    You can resize it (fills in with zeroes if you enlarge it)
+    
+    Do note however that all of these are syscalls!
+    So they're more expensive to call
+    than these
+    But that's shouganai if we're modifying memory owned by the kernel
+]
+
+#pause
+
+Implementation:\
+It's just a file which doesn't do writeback! \
+#speaker-note[
+    ...and what is this thing?
+    Just a file!
+    The contents live in the page cache, like any other file.
+    The only difference is that 
+    writeback is turned off.
+    So the pages remain permanently dirty.
+    Because there's nowhere for it to
+    write back to.
+    (Except swap of course)
+]
+
+#speaker-note[
+    And you'll notice that all these functions are
+    the same ones you'd use on a normal file,
+    and they work the exact same way.
+]
+
+#small[Same as an unlinked file on a tmpfs (more or less)]
+
+#speaker-note[
+    By the way, a memfd is basically the same thing as opening a file on a tmpfs
+    with `O_TMPFILE`
+]
+
+#speaker-note[
+    Create it with `memfd_create()`.  This allocates an inode in the VFS, puts
+    an entry in your process's file table, and returns the fd.
+]
+
+// #speaker-note[
+// And when I say "kernel-owned" (you could quibble and say "all memory is owned by
+// the kernel") I mean "owned by the page cache"
+// ]
+
+// Zero-filled regions don't consume any memory \
+// Memory pages are allocated as you write to it \
+// (`Vec::with_capacity(huge)` has the same property)
+
+== Ownership
+
+#align(center, image("ownership.svg", width: 70%))
+---
+#v(1.5mm)
+#align(center, image("ownership_2.svg", width: 70%))
+
+== sendfile()
+
+#speaker-note[
+Take a slice of `file` and push it onto `sock`'s send queue
+// ```
+// sendfile(sock, file, offset, len)
+// ```
+]
+
+#align(center, image("zerocopy_4.svg", height: 80%))
 
 == Page allocator [OLD]
 
