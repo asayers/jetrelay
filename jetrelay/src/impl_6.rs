@@ -29,12 +29,7 @@ pub fn run() -> Result<()> {
             listen_for_clients(listener, client_tx, |mut conn| {
                 let config = crate::handshake::perform_handshake(&mut conn)?;
                 conn.set_nonblocking(true)?;
-                let offset = config
-                    .cursor
-                    .and_then(crate::upstream::resolve_cursor)
-                    .unwrap_or(data_2.lock().unwrap().len() as u64);
-                debug!("Initial offset: {offset}");
-                Ok(Client { conn, offset })
+                Ok(Client::new2(conn, config, &data_2))
             })
         })?;
 

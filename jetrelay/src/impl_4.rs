@@ -1,5 +1,5 @@
 use crate::BUFFER;
-use crate::client::{ClientWithPipe, listen_for_clients};
+use crate::client::{Client, ClientWithPipe, listen_for_clients};
 use crate::impl_5::create_file;
 use crate::upstream::{Timestamp, copy_frames_to_file, fake_iter};
 use anyhow::{Context, Result};
@@ -34,7 +34,7 @@ pub fn run() -> Result<()> {
             listen_for_clients(listener, client_tx, |mut conn| {
                 let config = crate::handshake::perform_handshake(&mut conn)?;
                 conn.set_nonblocking(true)?;
-                ClientWithPipe::new(conn, config, &file_len_2)
+                Ok(Client::new(conn, config, &file_len_2).try_into()?)
             })
         })?;
 

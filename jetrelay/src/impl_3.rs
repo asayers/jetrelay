@@ -33,12 +33,7 @@ pub fn run() -> Result<()> {
             listen_for_clients(listener, client_tx, |mut conn| {
                 let config = crate::handshake::perform_handshake(&mut conn)?;
                 conn.set_nonblocking(true)?;
-                let offset = config
-                    .cursor
-                    .and_then(crate::upstream::resolve_cursor)
-                    .unwrap_or(file_len_2.load(Ordering::Acquire));
-                debug!("Initial offset: {offset}");
-                Ok(Client { conn, offset })
+                Ok(Client::new(conn, config, &file_len_2))
             })
         })?;
 

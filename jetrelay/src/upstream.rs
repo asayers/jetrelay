@@ -94,10 +94,11 @@ pub fn mk_stat_printer() -> impl FnMut(&Frame, Timestamp, u64) {
         if ts_sec != last_ts_sec {
             let stats = std::mem::take(&mut stats);
             info!(
-                "[{last_ts_sec}] {:#x} ({} evs, {} KiB), {} MiB total",
+                "[{last_ts_sec}] {:#x} ({} evs, {} MiB = {} Mbps), {} MiB total",
                 stats.hash,
                 stats.n_msgs,
-                stats.n_bytes / 1024,
+                stats.n_bytes / 1024 / 1024,
+                stats.n_bytes * 8 / 1024 / 1024,
                 file_len / 1024 / 1024,
             );
             last_ts_sec = ts_sec;
