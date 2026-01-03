@@ -1,4 +1,4 @@
-use anyhow::ensure;
+use anyhow::{Context, ensure};
 use bpaf::{Bpaf, Parser};
 use jiff::{Span, Timestamp};
 use rlimit::Resource;
@@ -9,7 +9,7 @@ use std::{
         atomic::{AtomicUsize, Ordering},
         mpsc,
     },
-    time::Duration,
+    time::{Duration, Instant},
 };
 use url::Url;
 
@@ -65,7 +65,7 @@ struct SecondStats {
 struct MsgStats {
     n_msgs: usize,
     n_bytes: usize,
-    hash: u64,
+    // hash: u64,
 }
 
 static N_CONNECTED: AtomicUsize = AtomicUsize::new(0);
@@ -125,6 +125,9 @@ pub fn main() {
             }
         });
         let mut global_stats = BTreeMap::<u64, (usize, MsgStats)>::new();
+        let mut mb_total = 0.;
+        let mut secs_total = 0.;
+        let start = Instant::now();
         loop {
             // let mut oldest_ts = u64::MAX;
             // let mut total_count = 0;
@@ -188,23 +191,39 @@ pub fn main() {
                 let d = second as i64 - Timestamp::now().as_second();
                 if let Some((n, stats)) = global_stats.get(&second) {
                     println!(
-                        "[{second}] T{d:+}s {:#x} ({} evs, {} KiB) x{n}",
-                        stats.hash,
+                        "[{second}] T{d:+}s ({} evs, {} KiB) x{n}",
+                        // stats.hash,
                         stats.n_msgs,
                         stats.n_bytes / 1024,
                     );
                 } else {
-                    println!("[{second}] T{d:+}s 0x0000000000000000 (??? evs, ??? KiB) x0");
+                    println!("[{second}] T{d:+}s (??? evs, ??? KiB) x0");
                 }
             }
-            let mb = new_bytes / 1024 / 1024;
+            let mb = new_bytes as f32 / 1024. / 1024.;
+            let n_clients = N_CONNECTED.load(Ordering::Acquire);
             println!(
-                "Total this second: {} evs, {} MiB = {} KHz, {} Mbps",
+                "Total this second: {} evs, {:.2} MiB = {} KHz, {:.2} Gbps, {:.2} Mbps/client ({} connected)",
                 new_msgs,
                 mb,
                 new_msgs / 1000,
-                mb * 8
+                mb * 8. / 1024.,
+                if n_clients == 0 {
+                    0.
+                } else {
+                    mb * 8. / n_clients as f32
+                },
+                n_clients,
             );
+            let secs = start.elapsed().as_secs() as usize;
+            if secs > 15 {
+                mb_total += mb;
+                secs_total += 1.;
+                println!(
+                    "Average so far: {} Gbps ({secs_total}s)",
+                    mb_total * 8. / 1024. / secs_total,
+                );
+            }
             println!();
 
             std::thread::sleep(Duration::from_secs(1));
@@ -225,6 +244,7 @@ fn worker(
         let frame = frame?;
         ensure!(frame.reserved_bits() == 0, "Non-zero reserved bits");
         ensure!(frame.mask().is_none(), "Frame is masked");
+        frame.check_len();
         match frame.opcode() {
             wsclient::OpCode::Text => (),
             wsclient::OpCode::Ping => continue, // Ignore
@@ -234,7 +254,21 @@ fn worker(
             }
         }
         let payload = std::str::from_utf8(frame.payload())?;
-        let timestamp = gjson::get(payload, "time_us").u64();
+
+        let timestamp: u64 = payload
+            .strip_prefix(r#"{ "time_us": "#)
+            .context("1")
+            .and_then(|x| {
+                x.strip_suffix(r#"" }"#)
+                    .context("2")?
+                    .trim_end()
+                    .strip_suffix(r#", "padding": ""#)
+                    .context("3")
+            })
+            .with_context(|| format!("{frame:?}"))?
+            .parse()?;
+
+        // let timestamp = gjson::get(payload, "time_us").u64();
 
         if dump {
             let collection = gjson::get(payload, "commit.collection");
@@ -261,9 +295,9 @@ fn worker(
         }
         stats.n_bytes += frame.bytes.len();
         stats.n_msgs += 1;
-        for bytes in frame.payload().chunks_exact(8) {
-            stats.hash ^= u64::from_le_bytes(bytes.try_into().unwrap());
-        }
+        // for bytes in frame.payload().chunks_exact(8) {
+        //     stats.hash ^= u64::from_le_bytes(bytes.try_into().unwrap());
+        // }
         if slow {
             std::thread::sleep(Duration::from_millis(10));
         }

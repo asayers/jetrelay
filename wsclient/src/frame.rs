@@ -34,6 +34,12 @@ impl<T: AsRef<[u8]>> Frame<T> {
     pub fn payload(&self) -> &[u8] {
         &self.bytes.as_ref()[self.header_len..]
     }
+
+    pub fn check_len(&self) {
+        let (header_len, payload_len) = parse_length(self.bytes.as_ref()).unwrap();
+        assert_eq!(header_len, self.header_len);
+        assert_eq!(payload_len, self.payload().len());
+    }
 }
 
 // Defined here:
@@ -97,6 +103,7 @@ impl<T: AsRef<[u8]>> Frame<T> {
     }
 }
 
+#[derive(Debug)]
 pub struct NeedMoreBytes(pub usize);
 
 // Ensures that `buffer` contains at least `n` bytes
