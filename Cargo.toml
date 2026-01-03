@@ -4,5 +4,6 @@ members = [
     "jetcompressor",
     "jetrelay",
     "jettester",
+    "naiverelay",
     "wsclient",
 ]
