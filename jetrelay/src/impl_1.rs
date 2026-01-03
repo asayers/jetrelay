@@ -1,5 +1,5 @@
 use crate::client::listen_for_clients;
-use crate::upstream::{Timestamp, fake_iter};
+use crate::upstream::connect_to_upstream;
 use anyhow::{Context, Result};
 use slab::Slab;
 use std::io::Write;
@@ -33,23 +33,13 @@ pub fn run() -> Result<()> {
             })
         })?;
 
-    let var = "UPSTREAM_URL";
-    let ws_iter: Box<dyn Iterator<Item = Result<(Frame, Timestamp)>>> = match std::env::var(var) {
-        Ok(url) => {
-            let url = url.parse().context(var)?;
-            let frames = wsclient::connect_websocket(&url)?;
-            Box::new(crate::upstream::jetstream_iter(frames))
-        }
-        Err(_) => Box::new(fake_iter()),
-    };
-    info!("Connected to upstream");
+    let event_rx = connect_to_upstream()?;
 
     let mut print_stats = crate::upstream::mk_stat_printer();
     let mut clients = Slab::<mpsc::Sender<Frame>>::default();
 
     info!("Starting runloop");
-    for x in ws_iter {
-        let (frame, timestamp) = x?;
+    for (frame, timestamp) in event_rx {
         print_stats(&frame, timestamp, 0);
         clients.retain(|_, client| client.send(frame.clone()).is_ok());
         while let Ok(client) = client_rx.try_recv() {

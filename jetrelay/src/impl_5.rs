@@ -1,5 +1,5 @@
 use crate::client::{Client, ClientWithPipe, listen_for_clients};
-use crate::upstream::{Timestamp, fake_iter};
+use crate::upstream::connect_to_upstream;
 use anyhow::{Context, Result, ensure};
 use io_uring::IoUring;
 use io_uring::types::Timespec;
@@ -12,7 +12,6 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, mpsc};
 use tracing::*;
-use wsclient::Frame;
 
 pub fn run() -> Result<()> {
     // Set up the uring
@@ -54,22 +53,12 @@ pub fn run() -> Result<()> {
 
     let mut clients = Slab::<ClientWithPipe>::default();
 
-    let var = "UPSTREAM_URL";
-    let ws_iter: Box<dyn Iterator<Item = Result<(Frame, Timestamp)>> + Send> =
-        match std::env::var(var) {
-            Ok(url) => {
-                let url = url.parse().context(var)?;
-                let frames = wsclient::connect_websocket(&url)?;
-                Box::new(crate::upstream::jetstream_iter(frames))
-            }
-            Err(_) => Box::new(fake_iter()),
-        };
-    info!("Connected to upstream");
+    let event_rx = connect_to_upstream()?;
 
     let file_len_2 = file_len.clone();
     std::thread::Builder::new()
-        .name("upstream_copier".to_owned())
-        .spawn(move || crate::upstream::copy_frames_to_file(file, file_len_2, ws_iter).unwrap())?;
+        .name("event_writer".to_owned())
+        .spawn(move || crate::upstream::copy_frames_to_file(file, file_len_2, event_rx).unwrap())?;
 
     let mut sqes = Vec::new();
 

@@ -4,6 +4,7 @@ use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::prelude::*;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
 use tracing::*;
@@ -32,17 +33,41 @@ impl std::ops::Sub<Duration> for Timestamp {
     }
 }
 
-pub fn fake_iter() -> impl Iterator<Item = Result<(Frame, Timestamp)>> {
+pub fn connect_to_upstream() -> anyhow::Result<Receiver<(Frame, Timestamp)>> {
+    let (event_tx, event_rx) = std::sync::mpsc::channel();
+    let var = "UPSTREAM_URL";
+    match std::env::var(var) {
+        Ok(url) => {
+            let url = url.parse().context(var)?;
+            let frames = wsclient::connect_websocket(&url)?;
+            std::thread::Builder::new()
+                .name("event_recv".to_owned())
+                .spawn(|| crate::upstream::jetstream_iter(frames, event_tx))?
+        }
+        Err(_) => std::thread::Builder::new()
+            .name("event_recv".to_owned())
+            .spawn(|| fake_iter(event_tx))?,
+    };
+    info!("Connected to upstream");
+    Ok(event_rx)
+}
+
+pub fn fake_iter(event_tx: Sender<(Frame, Timestamp)>) -> anyhow::Result<()> {
     let mut txt = format!(
-        "{{ \"time_us\": {:0>16}, \"padding\": \"{:>65000}\" }}",
+        "{{ \"time_us\": {:0>16}, \"padding\": \"{:>6500}\" }}",
         0, ' '
     )
     .into_bytes();
+    // let mut txt = format!(
+    //     "{{ \"time_us\": {:0>16}, \"padding\": \"{:>65000}\" }}",
+    //     0, ' '
+    // )
+    // .into_bytes();
     let mut prev = Timestamp::now().0 / 1_000_000;
     let target=  50 /* Hz */;
     let mut frame = Frame::text(std::str::from_utf8(&txt).unwrap());
     let mut sent = 0;
-    std::iter::repeat_with(move || {
+    loop {
         if sent >= target {
             let sleep = (prev + 1) * 1_000_000 - Timestamp::now().0;
             std::thread::sleep(Duration::from_micros(sleep));
@@ -59,25 +84,21 @@ pub fn fake_iter() -> impl Iterator<Item = Result<(Frame, Timestamp)>> {
         prev = this;
 
         sent += 1;
-        Ok((frame.clone(), ts))
-    })
+        event_tx.send((frame.clone(), ts))?;
+    }
 }
 
 pub fn jetstream_iter(
     ws_iter: impl Iterator<Item = std::io::Result<Frame>>,
-) -> impl Iterator<Item = Result<(Frame, Timestamp)>> {
-    ws_iter.filter_map(|frame| match frame {
-        Ok(frame) => {
-            let timestamp = parse_frame(&frame)
-                .with_context(|| format!("{:?}", frame.bytes))
-                .transpose()?;
-            Some(timestamp.map(|ts| (frame, ts)))
+    event_tx: Sender<(Frame, Timestamp)>,
+) -> anyhow::Result<()> {
+    for frame in ws_iter {
+        let frame = frame.context("I/O error while reading from websocket")?;
+        if let Some(ts) = parse_frame(&frame).with_context(|| format!("{:?}", frame.bytes))? {
+            event_tx.send((frame, ts))?;
         }
-        Err(e) => {
-            warn!("I/O error while reading from websocket: {e:#}");
-            None
-        }
-    })
+    }
+    Ok(())
 }
 
 pub fn mk_stat_printer() -> impl FnMut(&Frame, Timestamp, u64) {
@@ -127,14 +148,13 @@ const MAX_RETENTION: Duration = Duration::from_secs(2 * 60);
 pub fn copy_frames_to_file(
     mut file: File,
     file_len: Arc<AtomicU64>,
-    iter: impl Iterator<Item = Result<(Frame, Timestamp)>>,
+    iter: impl IntoIterator<Item = (Frame, Timestamp)>,
 ) -> Result<()> {
     let _g = info_span!("upstream copier thread").entered();
     info!("Copying data from upstream");
     let mut first_timestamp = Timestamp(0);
     let mut print_stats = crate::upstream::mk_stat_printer();
-    for x in iter {
-        let (frame, ts) = x?;
+    for (frame, ts) in iter {
         match handle_frame(&mut first_timestamp, &mut file, &file_len, &frame, ts) {
             Ok(file_len) => print_stats(&frame, ts, file_len),
             Err(e) => warn!("Bad frame: {e:#}"),

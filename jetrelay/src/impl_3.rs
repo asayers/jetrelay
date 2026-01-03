@@ -1,7 +1,7 @@
 use crate::BUFFER;
 use crate::client::{Client, listen_for_clients};
 use crate::impl_5::create_file;
-use crate::upstream::{Timestamp, copy_frames_to_file, fake_iter};
+use crate::upstream::{connect_to_upstream, copy_frames_to_file};
 use anyhow::{Context, Result};
 use rustix::fs::sendfile;
 use slab::Slab;
@@ -11,7 +11,6 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, mpsc};
 use std::time::Duration;
 use tracing::*;
-use wsclient::Frame;
 
 pub fn run() -> Result<()> {
     let file = create_file()?;
@@ -37,23 +36,13 @@ pub fn run() -> Result<()> {
             })
         })?;
 
-    let var = "UPSTREAM_URL";
-    let ws_iter: Box<dyn Iterator<Item = Result<(Frame, Timestamp)>> + Send> =
-        match std::env::var(var) {
-            Ok(url) => {
-                let url = url.parse().context(var)?;
-                let frames = wsclient::connect_websocket(&url)?;
-                Box::new(crate::upstream::jetstream_iter(frames))
-            }
-            Err(_) => Box::new(fake_iter()),
-        };
-    info!("Connected to upstream");
+    let event_rx = connect_to_upstream()?;
 
     let file_len_2 = file_len.clone();
     let file_2 = file.try_clone()?;
     std::thread::Builder::new()
-        .name("upstream_copier".to_owned())
-        .spawn(move || copy_frames_to_file(file_2, file_len_2, ws_iter))?;
+        .name("event_writer".to_owned())
+        .spawn(move || copy_frames_to_file(file_2, file_len_2, event_rx))?;
     info!("Connected to upstream");
 
     let mut clients = Slab::<Client>::default();

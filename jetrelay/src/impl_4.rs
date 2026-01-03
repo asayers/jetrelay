@@ -1,21 +1,19 @@
 use crate::BUFFER;
 use crate::client::{Client, ClientWithPipe, listen_for_clients};
 use crate::impl_5::create_file;
-use crate::upstream::{Timestamp, copy_frames_to_file, fake_iter};
+use crate::upstream::{connect_to_upstream, copy_frames_to_file};
 use anyhow::{Context, Result};
 use rustix::pipe::{SpliceFlags, splice};
 use slab::Slab;
-use std::fs::File;
 use std::io::ErrorKind;
 use std::net::{SocketAddr, TcpListener};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, mpsc};
 use std::time::Duration;
 use tracing::*;
-use wsclient::Frame;
 
 pub fn run() -> Result<()> {
-    let file: File = create_file()?;
+    let file = create_file()?;
     let file_len = Arc::new(AtomicU64::new(0));
 
     // Bind the listener socket ASAP
@@ -38,23 +36,13 @@ pub fn run() -> Result<()> {
             })
         })?;
 
-    let var = "UPSTREAM_URL";
-    let ws_iter: Box<dyn Iterator<Item = Result<(Frame, Timestamp)>> + Send> =
-        match std::env::var(var) {
-            Ok(url) => {
-                let url = url.parse().context(var)?;
-                let frames = wsclient::connect_websocket(&url)?;
-                Box::new(crate::upstream::jetstream_iter(frames))
-            }
-            Err(_) => Box::new(fake_iter()),
-        };
-    info!("Connected to upstream");
+    let event_rx = connect_to_upstream()?;
 
     let file_len_2 = file_len.clone();
     let file_2 = file.try_clone()?;
     std::thread::Builder::new()
-        .name("upstream_copier".to_owned())
-        .spawn(move || copy_frames_to_file(file_2, file_len_2, ws_iter))?;
+        .name("event_writer".to_owned())
+        .spawn(move || copy_frames_to_file(file_2, file_len_2, event_rx))?;
     info!("Connected to upstream");
 
     let mut clients = Slab::<ClientWithPipe>::default();
@@ -69,30 +57,7 @@ pub fn run() -> Result<()> {
         let n_pages = file_len / BUFFER;
         clients.retain(|_, client| {
             let sent_pages = client.inner.offset / BUFFER;
-            if client.bytes_in_pipe > 0 {
-                let ret = splice(
-                    &client.pipe_rdr,
-                    None,
-                    &client.inner.conn,
-                    None,
-                    client.bytes_in_pipe as usize,
-                    SpliceFlags::NONBLOCK,
-                );
-                match ret {
-                    Ok(n) => {
-                        client.bytes_in_pipe -= n as u64;
-                        client.inner.offset += n as u64;
-                    }
-                    Err(e) => match e.kind() {
-                        ErrorKind::WouldBlock => (), // Slow client
-                        ErrorKind::BrokenPipe | ErrorKind::ConnectionReset => {
-                            debug!("Socket closed by other side");
-                            return false;
-                        }
-                        _ => panic!("{e:#}"),
-                    },
-                }
-            } else if sent_pages < n_pages {
+            if sent_pages < n_pages {
                 let count = ((n_pages - sent_pages) * BUFFER) as usize;
                 let ret = splice(
                     &file,
@@ -103,9 +68,24 @@ pub fn run() -> Result<()> {
                     SpliceFlags::NONBLOCK,
                 );
                 match ret {
-                    Ok(n) => {
-                        client.bytes_in_pipe += n as u64;
-                    }
+                    Ok(n) => client.bytes_in_pipe += n as u64,
+                    Err(e) => match e.kind() {
+                        ErrorKind::WouldBlock => (), // Pipe full
+                        _ => panic!("{e:#}"),
+                    },
+                }
+            }
+            if client.bytes_in_pipe > 0 {
+                let ret = splice(
+                    &client.pipe_rdr,
+                    None,
+                    &client.inner.conn,
+                    None,
+                    client.bytes_in_pipe as usize,
+                    SpliceFlags::NONBLOCK,
+                );
+                match ret {
+                    Ok(n) => client.bytes_in_pipe -= n as u64,
                     Err(e) => match e.kind() {
                         ErrorKind::WouldBlock => (), // Slow client
                         ErrorKind::BrokenPipe | ErrorKind::ConnectionReset => {

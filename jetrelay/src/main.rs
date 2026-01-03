@@ -1,12 +1,17 @@
 mod client;
 mod handshake;
-mod impl_1; // thread-per-client, write() blocking. Maxes out at 8 Gbps
-mod impl_2; // vec, write(), nonblocking.           Maxes out at 29 Gbps
-mod impl_3; // memfd, sendfile(), nonblocking.      Maxes out at 44 Gbps
-mod impl_4; // memfd, splice(), nonblocking.        BUGGY
-mod impl_5; // memfd, io_uring.                     BUGGY
-mod impl_6; // vec, send_zc(), nonblocking
-mod impl_7; // vec, write(), io_uring               Maxes out at 18 Gbps
+
+// naiverelay: 13.2 Gbps (8k clients @ 2.5 Mbps = 19.5 Gbps)
+
+//                                               | 1.5k clients, 20 Mbps | 15k clients, 2 Mbps
+mod impl_1; // thread-per-client, write() blocking. Maxes out at 8 Gbps  | like 4 Gbps
+mod impl_2; // vec, write(), nonblocking.           Maxes out at 24 Gbps | 24/36 Gbps
+mod impl_3; // memfd, sendfile(), nonblocking.      Maxes out at 36 Gbps | 36/36 Gbps
+mod impl_4; // memfd, splice(), nonblocking.        BUGGY                |
+mod impl_5; // memfd, io_uring.                     BUGGY                |
+mod impl_6; // vec, send_zc(), nonblocking                               |
+mod impl_7; // vec, write(), io_uring               Maxes out at 24 Gbps | 28/36 Gbps
+// mod impl_8; // tokio, task-per-client, write() non-blocking     TODO
 mod io;
 mod upstream;
 
@@ -32,6 +37,7 @@ fn main() -> Result<()> {
         Ok("5") => crate::impl_5::run(),
         Ok("6") => crate::impl_6::run(),
         Ok("7") => crate::impl_7::run(),
+        // Ok("8") => tokio::runtime::Runtime::new()?.block_on(crate::impl_8::run()),
         Ok(x) => bail!("{x}: Unknown impl"),
         Err(_) => crate::impl_5::run(),
     }

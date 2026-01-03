@@ -9,9 +9,10 @@ base64 = "0.22.1"
 gjson = "0.8.1"
 httparse = "1.10.1"
 io-uring = { git = "https://github.com/asayers/io-uring.git", branch = "entry-result", version = "0.7.11" }
-rustix = { version = "1.1.2", features = ["fs", "pipe"] }
+rustix = { version = "1.1.2", features = ["fs", "net", "pipe"] }
 sha1_smol = "1.0.1"
 slab = "0.4.11"
+# tokio = { version = "1.48.0", features = ["full", "rt", "rt-multi-thread"] }
 tracing = "0.1.43"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
 wsclient = { version = "0.1.0", path = "../wsclient" }

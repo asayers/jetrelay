@@ -67,7 +67,7 @@ impl Client {
             .cursor
             .and_then(crate::upstream::resolve_cursor)
             .unwrap_or_else(|| file_len.load(Ordering::Acquire));
-        info!("Initial offset: {offset}");
+        debug!("Initial offset: {offset}");
         Client { conn, offset }
     }
 
@@ -76,7 +76,7 @@ impl Client {
             .cursor
             .and_then(crate::upstream::resolve_cursor)
             .unwrap_or_else(|| file.lock().unwrap().len() as u64);
-        info!("Initial offset: {offset}");
+        debug!("Initial offset: {offset}");
         Client { conn, offset }
     }
 }

@@ -1,6 +1,6 @@
 use crate::BUFFER;
 use crate::client::{Client, listen_for_clients};
-use crate::upstream::{Timestamp, fake_iter};
+use crate::upstream::connect_to_upstream;
 use anyhow::{Context, Result};
 use slab::Slab;
 use std::io::{ErrorKind, Write};
@@ -8,7 +8,6 @@ use std::net::{SocketAddr, TcpListener};
 use std::sync::{Arc, Mutex, mpsc};
 use std::time::Duration;
 use tracing::*;
-use wsclient::Frame;
 
 pub fn run() -> Result<()> {
     let data = Arc::new(Mutex::new(Vec::<u8>::new()));
@@ -33,25 +32,14 @@ pub fn run() -> Result<()> {
             })
         })?;
 
-    let var = "UPSTREAM_URL";
-    let ws_iter: Box<dyn Iterator<Item = Result<(Frame, Timestamp)>> + Send> =
-        match std::env::var(var) {
-            Ok(url) => {
-                let url = url.parse().context(var)?;
-                let frames = wsclient::connect_websocket(&url)?;
-                Box::new(crate::upstream::jetstream_iter(frames))
-            }
-            Err(_) => Box::new(fake_iter()),
-        };
-    info!("Connected to upstream");
+    let event_rx = connect_to_upstream()?;
 
     let data_2 = data.clone();
     std::thread::Builder::new()
-        .name("upstream_copier".to_owned())
+        .name("event_writer".to_owned())
         .spawn(move || {
             let mut print_stats = crate::upstream::mk_stat_printer();
-            for x in ws_iter {
-                let (frame, timestamp) = x?;
+            for (frame, timestamp) in event_rx {
                 let mut data = data_2.lock().unwrap();
                 data.extend(&frame.bytes);
                 let total = data.len() as u64;
