@@ -45,7 +45,7 @@ fn fill_pipe(client_id: ClientId, client: &mut ClientWithPipe, len: u32) -> sque
     let off_in = i64::try_from(client.inner.offset).unwrap();
     let off_out = -1; // Pipes don't have offsets
     opcode::Splice::new(fd_in, off_in, fd_out, off_out, len)
-        .flags(SpliceFlags::NONBLOCK.bits())
+        // .flags(SpliceFlags::NONBLOCK.bits())
         .build()
         .user_data(UserData::FillPipe(client_id).into())
 }
@@ -57,7 +57,7 @@ fn drain_pipe(client_id: ClientId, client: &mut ClientWithPipe) -> squeue::Entry
     let off_out = -1; // Sockets don't have offsets
     let len = u32::MAX; // As much as possible (note: the op will return an error)
     opcode::Splice::new(fd_in, off_in, fd_out, off_out, len)
-        .flags(SpliceFlags::NONBLOCK.bits())
+        // .flags(SpliceFlags::NONBLOCK.bits())
         .build()
         .user_data(UserData::DrainPipe(client_id).into())
 }
@@ -90,15 +90,24 @@ pub fn get_client_caught_up(
     let _g = debug_span!("", client_id).entered();
     let n_pages = file_len / BUFFER;
     let sent_pages = client.inner.offset / BUFFER;
-    if !client.copy_in_flight && sent_pages < n_pages {
+    // if !client.copy_in_flight && sent_pages < n_pages {
+    //     let n_bytes = u32::try_from((n_pages - sent_pages) * BUFFER).unwrap();
+    //     debug!("Copying {n_bytes} bytes into the pipe");
+    //     sqes.push(fill_pipe(client_id, client, n_bytes));
+    //     client.copy_in_flight = true;
+    // }
+    // if !client.send_in_flight && client.bytes_in_pipe > 0 {
+    //     debug!("Sending {} bytes to the socket", client.bytes_in_pipe);
+    //     sqes.push(drain_pipe(client_id, client));
+    //     client.send_in_flight = true;
+    // }
+    if !client.send_in_flight && sent_pages < n_pages {
+        assert_eq!(client.bytes_in_pipe, 0);
         let n_bytes = u32::try_from((n_pages - sent_pages) * BUFFER).unwrap();
         debug!("Copying {n_bytes} bytes into the pipe");
-        sqes.push(fill_pipe(client_id, client, n_bytes));
-        client.copy_in_flight = true;
-    }
-    if !client.send_in_flight && client.bytes_in_pipe > 0 {
-        debug!("Sending {} bytes to the socket", client.bytes_in_pipe);
+        sqes.push(fill_pipe(client_id, client, n_bytes).flags(squeue::Flags::IO_HARDLINK));
         sqes.push(drain_pipe(client_id, client));
+        client.copy_in_flight = true;
         client.send_in_flight = true;
     }
     Ok(())
@@ -107,12 +116,11 @@ pub fn get_client_caught_up(
 pub fn handle_completion(clients: &mut Slab<ClientWithPipe>, cqe: cqueue::Entry) -> Result<()> {
     let user_data = UserData::try_from(cqe.user_data())?;
     let result = cqe.result();
-    debug!("{user_data:?} completed with {result:?}");
     let client_id = match user_data {
         UserData::FillPipe(client_id) => client_id,
         UserData::DrainPipe(client_id) => client_id,
     };
-    let _g = info_span!("", client_id).entered();
+    debug!(client_id, "{user_data:?} completed with {result:?}");
     let bytes_written = match result {
         Ok(x) => x as u64,
         Err(e)
@@ -125,7 +133,7 @@ pub fn handle_completion(clients: &mut Slab<ClientWithPipe>, cqe: cqueue::Entry)
                     assert!(clients.get_mut(client_id as usize).is_none());
                 }
                 UserData::DrainPipe(_) => {
-                    info!("Socket closed by other side");
+                    info!(client_id, "Socket closed by other side");
                     let client = clients.try_remove(client_id as usize);
                     ensure!(client.is_some(), "Two hangups for the same client?");
                 }
@@ -135,7 +143,7 @@ pub fn handle_completion(clients: &mut Slab<ClientWithPipe>, cqe: cqueue::Entry)
         Err(e) => return Err(e.into()),
     };
     let Some(client) = clients.get_mut(client_id as usize) else {
-        warn!("Got an IO completion but the client is gone");
+        warn!(client_id, "Got an IO completion but the client is gone");
         return Ok(());
     };
     match user_data {
@@ -150,7 +158,6 @@ pub fn handle_completion(clients: &mut Slab<ClientWithPipe>, cqe: cqueue::Entry)
             ensure!(client.send_in_flight);
             client.send_in_flight = false;
             ensure!(bytes_written != 0);
-            debug!("Sent {bytes_written} bytes to client");
             client.bytes_in_pipe -= bytes_written;
         }
     }

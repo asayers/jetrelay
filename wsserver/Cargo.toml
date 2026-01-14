@@ -1,0 +1,11 @@
+[package]
+name = "wsserver"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.100"
+base64 = "0.22.1"
+httparse = "1.10.1"
+sha1_smol = "1.0.1"
+tracing = "0.1.44"

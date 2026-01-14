@@ -3,9 +3,11 @@
 
 = io_uring
 
-== Thundering herd
+== 
 
-`CVAR.notify_all()` \
-=> thousands of threads fight over the mutex
+// == Thundering herd
 
-== io_uring
+// `CVAR.notify_all()` \
+// => thousands of threads fight over the mutex
+
+// == io_uring

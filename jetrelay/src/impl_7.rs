@@ -1,6 +1,6 @@
-use crate::BUFFER;
 use crate::client::{Client, ClientAsync, listen_for_clients};
 use crate::upstream::connect_to_upstream;
+use crate::{BUFFER, MAX_SEND};
 use anyhow::{Context, Result};
 use io_uring::IoUring;
 use io_uring::types::Fd;
@@ -39,7 +39,7 @@ pub fn run() -> Result<()> {
         .name("client_listener".to_owned())
         .spawn(move || {
             listen_for_clients(listener, client_tx, |mut conn| {
-                let config = crate::handshake::perform_handshake(&mut conn)?;
+                let config = wsserver::perform_handshake(&mut conn)?;
                 conn.set_nonblocking(true)?;
                 Ok(Client::new(conn, config, &file_len_2).into())
             })
@@ -87,7 +87,6 @@ pub fn run() -> Result<()> {
                 break;
             }
             let last_page = client.inner.offset / BUFFER;
-            const MAX_SEND: u64 = 64; // pages
             if last_page < n_pages {
                 let data = data.lock().unwrap();
                 let slice = &data[(client.inner.offset as usize)
@@ -165,7 +164,9 @@ pub fn run() -> Result<()> {
                 },
             }
         }
-        dbg!(n_pushed, n_pulled);
+        if n_pushed != n_pulled {
+            warn!(n_pushed, n_pulled);
+        }
 
         if last_print.elapsed() > Duration::from_secs(1) {
             {

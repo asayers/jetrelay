@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="41.4785mm"
+   height="19.493538mm"
+   viewBox="0 0 41.4785 19.493538"
+   version="1.1"
+   id="svg1"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <marker
+       style="overflow:visible"
+       id="DartArrow-3-3-0-5"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       markerWidth="0.5"
+       markerHeight="0.5"
+       viewBox="0 0 1 1"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path13-8-2-8-4" />
+    </marker>
+  </defs>
+  <g
+     id="layer1"
+     transform="translate(-19.03632,-107.49389)">
+    <g
+       id="g15-2-4-5"
+       transform="translate(-2.9240963,73.891815)">
+      <g
+         id="g6-6-6-7-7"
+         transform="translate(-0.41835134,24.025557)">
+        <circle
+           style="fill:#0baba6;fill-opacity:1;stroke-width:0.1"
+           id="path3-8-5-9-4"
+           cx="24.429445"
+           cy="11.627204"
+           r="2.0506773" />
+        <text
+           xml:space="preserve"
+           style="font-size:1.76389px;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#d3f7ff;fill-opacity:1;stroke-width:0.1"
+           x="23.28438"
+           y="12.269284"
+           id="text1-9-8-3-9"><tspan
+             id="tspan1-0-7-9-9"
+             style="fill:#d3f7ff;fill-opacity:1;stroke-width:0.1"
+             x="23.28438"
+             y="12.269284">C1</tspan></text>
+        <g
+           id="g5-6-9-2-4"
+           transform="translate(-7.9375004,-3.0762663)">
+          <circle
+             style="fill:#0baba6;fill-opacity:1;stroke-width:0.1"
+             id="path3-9-8-6-8-5"
+             cx="40.163826"
+             cy="14.70347"
+             r="2.0506773" />
+          <text
+             xml:space="preserve"
+             style="font-size:1.76389px;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#d3f7ff;fill-opacity:1;stroke-width:0.1"
+             x="39.007996"
+             y="15.345551"
+             id="text1-3-7-0-3-9"><tspan
+               id="tspan1-6-9-4-0-3"
+               style="fill:#d3f7ff;fill-opacity:1;stroke-width:0.1"
+               x="39.007996"
+               y="15.345551">C2</tspan><tspan
+               style="fill:#d3f7ff;fill-opacity:1;stroke-width:0.1"
+               x="39.007996"
+               y="17.550413"
+               id="tspan3-0-1-1-5" /></text>
+        </g>
+      </g>
+      <path
+         style="fill:#d3f7ff;fill-opacity:1;stroke:#0baba6;stroke-width:0.6;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#DartArrow-3-3-0-5)"
+         d="m 24.553366,37.467717 2.498815,4.837642"
+         id="path6-3-0-7-7" />
+      <path
+         style="fill:#d3f7ff;fill-opacity:1;stroke:#0baba6;stroke-width:0.6;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#DartArrow-3-3-0-5)"
+         d="m 31.233624,37.554828 -2.156423,4.746981"
+         id="path6-5-3-4-8-0" />
+    </g>
+    <rect
+       style="fill:#c9c9c9;fill-opacity:1;stroke:#606060;stroke-width:0.304138;stroke-opacity:1"
+       id="rect1-1-5-1-1"
+       width="8.5896311"
+       height="8.8217831"
+       x="25.090229"
+       y="118.01359" />
+    <rect
+       style="fill:#c9c9c9;fill-opacity:1;stroke:#606060;stroke-width:0.304138;stroke-opacity:1"
+       id="rect1-1-5-8-7-2"
+       width="8.5896311"
+       height="8.8217831"
+       x="33.984524"
+       y="118.01359" />
+    <rect
+       style="fill:#c9c9c9;fill-opacity:1;stroke:#606060;stroke-width:0.304138;stroke-opacity:1"
+       id="rect1-1-5-8-7-9-9"
+       width="8.5896311"
+       height="8.8217831"
+       x="42.878822"
+       y="118.01359" />
+    <rect
+       style="fill:#c9c9c9;fill-opacity:1;stroke:#606060;stroke-width:0.304138;stroke-opacity:1"
+       id="rect1-1-5-8-7-9-9-0"
+       width="8.5896311"
+       height="8.8217831"
+       x="51.773121"
+       y="118.01359" />
+  </g>
+</svg>

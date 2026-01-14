@@ -30,7 +30,7 @@ pub fn run() -> Result<()> {
         .name("client_listener".to_owned())
         .spawn(move || {
             listen_for_clients(listener, client_tx, |mut conn| {
-                let config = crate::handshake::perform_handshake(&mut conn)?;
+                let config = wsserver::perform_handshake(&mut conn)?;
                 conn.set_nonblocking(true)?;
                 Ok(Client::new(conn, config, &file_len_2).try_into()?)
             })
@@ -55,49 +55,62 @@ pub fn run() -> Result<()> {
         }
         let file_len = file_len.load(Ordering::Acquire);
         let n_pages = file_len / BUFFER;
+        let mut anyone_did_something = false;
         clients.retain(|_, client| {
-            let sent_pages = client.inner.offset / BUFFER;
-            if sent_pages < n_pages {
-                let count = ((n_pages - sent_pages) * BUFFER) as usize;
-                let ret = splice(
-                    &file,
-                    Some(&mut client.inner.offset),
-                    &client.pipe_wtr,
-                    None,
-                    count,
-                    SpliceFlags::NONBLOCK,
-                );
-                match ret {
-                    Ok(n) => client.bytes_in_pipe += n as u64,
-                    Err(e) => match e.kind() {
-                        ErrorKind::WouldBlock => (), // Pipe full
-                        _ => panic!("{e:#}"),
-                    },
+            loop {
+                let sent_pages = client.inner.offset / BUFFER;
+                let mut did_something = false;
+                if sent_pages < n_pages {
+                    let count = ((n_pages - sent_pages) * BUFFER) as usize;
+                    let ret = splice(
+                        &file,
+                        Some(&mut client.inner.offset),
+                        &client.pipe_wtr,
+                        None,
+                        count,
+                        SpliceFlags::NONBLOCK,
+                    );
+                    did_something |= ret.is_ok();
+                    anyone_did_something |= ret.is_ok();
+                    match ret {
+                        Ok(n) => client.bytes_in_pipe += n as u64,
+                        Err(e) => match e.kind() {
+                            ErrorKind::WouldBlock => (), // Pipe full
+                            _ => panic!("{e:#}"),
+                        },
+                    }
                 }
-            }
-            if client.bytes_in_pipe > 0 {
-                let ret = splice(
-                    &client.pipe_rdr,
-                    None,
-                    &client.inner.conn,
-                    None,
-                    client.bytes_in_pipe as usize,
-                    SpliceFlags::NONBLOCK,
-                );
-                match ret {
-                    Ok(n) => client.bytes_in_pipe -= n as u64,
-                    Err(e) => match e.kind() {
-                        ErrorKind::WouldBlock => (), // Slow client
-                        ErrorKind::BrokenPipe | ErrorKind::ConnectionReset => {
-                            debug!("Socket closed by other side");
-                            return false;
-                        }
-                        _ => panic!("{e:#}"),
-                    },
+                if client.bytes_in_pipe > 0 {
+                    let ret = splice(
+                        &client.pipe_rdr,
+                        None,
+                        &client.inner.conn,
+                        None,
+                        client.bytes_in_pipe as usize,
+                        SpliceFlags::NONBLOCK,
+                    );
+                    did_something |= ret.is_ok();
+                    anyone_did_something |= ret.is_ok();
+                    match ret {
+                        Ok(n) => client.bytes_in_pipe -= n as u64,
+                        Err(e) => match e.kind() {
+                            ErrorKind::WouldBlock => (), // Slow client
+                            ErrorKind::BrokenPipe | ErrorKind::ConnectionReset => {
+                                debug!("Socket closed by other side");
+                                return false;
+                            }
+                            _ => panic!("{e:#}"),
+                        },
+                    }
+                }
+                if !did_something {
+                    break;
                 }
             }
             true
         });
-        std::thread::sleep(Duration::from_millis(10))
+        if !anyone_did_something {
+            std::thread::sleep(Duration::from_millis(10))
+        }
     }
 }

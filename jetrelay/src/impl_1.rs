@@ -22,7 +22,7 @@ pub fn run() -> Result<()> {
         .name("client_listener".to_owned())
         .spawn(move || {
             listen_for_clients(listener, client_tx, |mut conn| {
-                let _config = crate::handshake::perform_handshake(&mut conn)?;
+                let _config = wsserver::perform_handshake(&mut conn)?;
                 let (tx, rx) = mpsc::channel::<Frame>();
                 std::thread::spawn(move || {
                     for frame in rx {

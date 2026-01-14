@@ -12,6 +12,7 @@ properties=(
     # "RuntimeDirectory=jetrelay"
     # Raise the fd limit
     "LimitNOFILE=1000000"
+    # "LimitMEMLOCK=infinity"
     "CPUQuota=20%"
     "CPUWeight=10000"
     "CollectMode=inactive-or-failed"
@@ -24,4 +25,5 @@ systemd-run \
     --service-type=exec \
     -E IMPL -E RUST_LOG \
     "${properties[@]/#/-p}" \
-    $cmd
+    perf record --mmap-pages=32 -g --call-graph=dwarf -F99 $cmd
+    

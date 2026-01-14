@@ -1,8 +1,31 @@
-use crate::upstream::Timestamp;
 use anyhow::{Result, anyhow, bail, ensure};
 use std::io::prelude::*;
 use std::net::TcpStream;
+use std::time::{Duration, SystemTime};
 use tracing::*;
+
+#[derive(Ord, PartialOrd, Eq, PartialEq, Debug, Copy, Clone)]
+pub struct Timestamp(pub u64 /* epoch micros */);
+
+impl Timestamp {
+    pub fn now() -> Self {
+        Timestamp(
+            SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_micros()
+                .try_into()
+                .unwrap(),
+        )
+    }
+}
+
+impl std::ops::Sub<Duration> for Timestamp {
+    type Output = Timestamp;
+    fn sub(self, rhs: Duration) -> Self::Output {
+        Timestamp(self.0 - rhs.as_micros() as u64)
+    }
+}
 
 #[derive(Debug)]
 pub struct ClientConfig {

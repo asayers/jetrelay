@@ -1,0 +1,7 @@
+GET /subscribe HTTP/1.1
+Host: jetstream2.us-west.bsky.network
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Key: ZrA4jlaiSs09uWIE5yW2Tg==
+Sec-WebSocket-Version: 13
+

@@ -37,17 +37,20 @@ If you're ever used the "bytes" crate this may look familiar
 #small[There's also an optimization which allows very small fragments to be
 inlined into the skb]
 
-== write()
+== `write()`
 
 #align(center, image("zerocopy_1.svg", height: 80%))
----
+
+== `write() write() write()`
 #speaker-note[
     Now we send the same data to multiple clients, which each have their own
     send queue...
 ]
 #align(center, image("zerocopy_2.svg", height: 80%))
 #speaker-note[...but look at all these copies!]
+
 ---
+
 #align(center, image("zerocopy_3.svg", height: 80%))
 #speaker-note[
     _This_ is what we want - one copy, lots of references to the same data.  But
@@ -150,12 +153,30 @@ It's just a file which doesn't do writeback! \
 // Memory pages are allocated as you write to it \
 // (`Vec::with_capacity(huge)` has the same property)
 
-== Ownership
+== memfd
 
-#align(center, image("ownership.svg", width: 70%))
----
-#v(1.5mm)
-#align(center, image("ownership_2.svg", width: 70%))
+```rust
+let file = memfd_create("my_special_data", MemfdFlags::empty())?;
+```
+
+#v(1fr)
+
+```console
+$ ls /proc/272127/fd
+0  1  2  3
+```
+
+#pause
+
+```console
+$ ls -l /proc/272127/fd
+lrwx------ - asayers 30 Dec 16:05 0 -> /dev/pts/10
+lrwx------ - asayers 30 Dec 16:05 1 -> /dev/pts/10
+lrwx------ - asayers 30 Dec 16:05 2 -> /dev/pts/10
+lrwx------ - asayers 30 Dec 16:05 3 -> '/memfd:my_special_data (deleted)'
+```
+
+#v(1fr)
 
 == sendfile()
 
@@ -167,6 +188,27 @@ Take a slice of `file` and push it onto `sock`'s send queue
 ]
 
 #align(center, image("zerocopy_4.svg", height: 80%))
+
+== Implementation \#3
+
+== How does it do?
+
+#table(columns:3, inset: 0.5em,
+table.header([*Implementation*], [*Throughput*], [*Clients*]),
+[tokio + tungstenite], [9.8 Gbps], [6.5k],
+[vec + non-blocking write], [56 Gbps], [35k],
+[memfd + sendfile], [72 Gbps], [45k],
+[???], [??? Gbps], [???],
+)
+
+#small[(single core, loopback interface)]
+
+== Ownership
+
+#align(center, image("ownership.svg", width: 70%))
+---
+#v(1.5mm)
+#align(center, image("ownership_2.svg", width: 70%))
 
 == Page allocator [OLD]
 

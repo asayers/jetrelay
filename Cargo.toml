@@ -1,9 +1,12 @@
 [workspace]
 resolver = "3"
-members = [
+members = ["dumpfile","fakeupstream",
     "jetcompressor",
     "jetrelay",
     "jettester",
-    "naiverelay",
-    "wsclient",
+    "naiverelay", "uringrelay",
+    "wsclient", "wsserver",
 ]
+
+[profile.release]
+debug = true

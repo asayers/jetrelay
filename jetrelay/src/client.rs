@@ -1,12 +1,11 @@
-use crate::handshake::ClientConfig;
 use anyhow::Result;
 use rustix::pipe::PipeFlags;
 use std::io::{PipeReader, PipeWriter, prelude::*};
 use std::net::{TcpListener, TcpStream};
-use std::sync::Mutex;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::mpsc::Sender;
 use tracing::*;
+use wsserver::ClientConfig;
 
 pub fn listen_for_clients<C: Send + Sync + 'static>(
     listener: TcpListener,
@@ -70,15 +69,6 @@ impl Client {
         debug!("Initial offset: {offset}");
         Client { conn, offset }
     }
-
-    pub fn new2(conn: TcpStream, config: ClientConfig, file: &Mutex<Vec<u8>>) -> Client {
-        let offset = config
-            .cursor
-            .and_then(crate::upstream::resolve_cursor)
-            .unwrap_or_else(|| file.lock().unwrap().len() as u64);
-        debug!("Initial offset: {offset}");
-        Client { conn, offset }
-    }
 }
 
 impl Drop for Client {
@@ -119,8 +109,9 @@ pub struct ClientWithPipe {
 impl TryFrom<Client> for ClientWithPipe {
     type Error = std::io::Error;
     fn try_from(inner: Client) -> std::io::Result<Self> {
-        // let (pipe_rdr, pipe_wtr) = std::io::pipe()?;
-        let (pipe_rdr, pipe_wtr) = rustix::pipe::pipe_with(PipeFlags::NONBLOCK)?;
+        let (pipe_rdr, pipe_wtr) = std::io::pipe()?;
+        // let (pipe_rdr, pipe_wtr) = rustix::pipe::pipe_with(PipeFlags::NONBLOCK)?;
+        // rustix::pipe::fcntl_setpipe_size(&pipe_rdr, 64 * 4096)?;
         Ok(ClientWithPipe {
             inner,
             bytes_in_pipe: 0,

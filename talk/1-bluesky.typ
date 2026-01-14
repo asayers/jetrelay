@@ -3,12 +3,15 @@
 #import "@preview/fletcher:0.5.8" as fletcher
 #import "@preview/tdtr:0.4.0": *
 
-= The firehose
+= Bluesky
 
 == Bluesky
 
-Like Twitter, but data publically available \
-⇒  you can look up someone's tweets
+Twitter clone
+
+All data publically available
+
+// Goal: open ecosystem, alternative frontends, etc.
 
 #speaker-note[
 - Lookup someone's handle and see all their tweets
@@ -16,8 +19,6 @@ Like Twitter, but data publically available \
 - Data lives on your server
 - Like a blog with an RSS feed
 ]
-
-#pause
 
 #speaker-note[
 - with RSS you periodically poll all your subscriptions to check
@@ -34,9 +35,9 @@ Like Twitter, but data publically available \
 - any time the state of the network changes in any way
 - it sends an update
 ]
-Also: "the firehose"
 
-#pause
+== The firehose
+
 #speaker-note[
 - So let's take a look at it
 - Here's one of their servers
@@ -45,57 +46,56 @@ Also: "the firehose"
 ]
 #v(1fr)
 #align(center)[
-`ws://jetstream2.us-west.bsky.network/subscribe`
-
-#small[("jetstream": A variant of the firehose; omits signatures etc.)]
+`wss://jetstream2.us-west.bsky.network/subscribe`
 ]
 #v(1fr)
 
+---
 
-== Websockets
+#text(size:12pt)[
+#show raw: it => it.text.codepoints().join(sym.zws)
 
-// First thing we have to do is a handshake.
-#titled-block(title: [Handshake])[
-// Starts out looking like we're talking HTTP.
+```console
+$ websocat wss://jetstream2.us-west.bsky.network/subscribe
 ```
-GET /subscribe HTTP/1.1
+```json
+{"did":"did:plc:l3qhzatwuymbr6ibvptiwdlw","time_us":1767409065340965,"kind":"commit","commit":{"rev":"3mbifys2ylx2m","operation":"create","collection":"app.bsky.graph.block","rkey":"3mbifys2sqh2m","record":{"$type":"app.bsky.graph.block","createdAt":"2026-01-03T02:57:46.549Z","subject":"did:plc:j74bmy3c7ls2u4mgl6xegder"},"cid":"bafyreigwmq2ihqjrk5cje2czqowbsp4t5izweswragdkjv3g7zx4qrm22m"}}
 ```
+```json
+{"did":"did:plc:g6ifxgrzi22eaemi4lc5pyr2","time_us":1767409065344776,"kind":"commit","commit":{"rev":"3mbifys4uz42r","operation":"create","collection":"app.bsky.feed.post","rkey":"3mbifys26vc2z","record":{"$type":"app.bsky.feed.post","createdAt":"2026-01-03T02:57:45.138Z","facets":[{"features":[{"$type":"app.bsky.richtext.facet#tag","tag":"Cavs"}],"index":{"byteEnd":5,"byteStart":0}}],"langs":["en"],"text":"#Cavs beat the Nuggets 113-108 to win their third straight game. Not a great performance by any means for Cleveland, but the intensity level picked up considerably down the stretch to come back from down as many as 11 in the second half."},"cid":"bafyreic7t2o4m3wdeejy46oidl7annxcpqfj243ldamylkxxo3rly3xxgi"}}
+```
+```json
+{"did":"did:plc:r3xe3qev4vc55rsvfndqiuol","time_us":1767409065345616,"kind":"commit","commit":{"rev":"3mbifys43mq26","operation":"create","collection":"app.bsky.feed.like","rkey":"3mbifys3mxy26","record":{"$type":"app.bsky.feed.like","createdAt":"2026-01-03T02:57:45.129Z","subject":{"cid":"bafyreif7armatayafcspvi6bot4axgqzkw7q2l357k4qjxagr4vaw2rpym","uri":"at://did:plc:ecjyiwkyae3k3d46iy7d6u3h/app.bsky.feed.post/3mbid4je65s2y"}},"cid":"bafyreib3m2nlaut7ixgcwe2a6o5v3v33ixqhyy7deai2nqoehet2siapy4"}}
+```
+```json
+{"did":"did:plc:bm3ix5bznclbq2jtst2u2q4w","time_us":1767409065347713,"kind":"commit","commit":{"rev":"3mbifyrtevq2v","operation":"delete","collection":"app.bsky.feed.post","rkey":"3mbifxsf4wc24"}}
+```
+```json
+{"did":"did:plc:22w4xuatznlr2a65xslrqebv","time_us":1767409065348581,"kind":"commit","commit":{"rev":"3mbifyrxg2n2h","operation":"create","collection":"app.bsky.feed.like","rkey":"3mbifyrx2dn2h","record":{"$type":"app.bsky.feed.like","createdAt":"2026-01-03T02:57:44.882Z","subject":{"cid":"bafyreid6nqpuxytajk5yr2ycobx2sfoe6cucmvblhflrwdvs2qyza6jlcq","uri":"at://did:plc:dtwphuxvtvimwtra5yh4ujt4/app.bsky.feed.post/3mbiehajoke2p"}},"cid":"bafyreifmeyknmyljmd3wwjhl2wgbolkoldpngemvicram5kbtbj7oj7xni"}}
+```
+```json
+{"did":"did:plc:73dynrh5cyibgfjskeudlwog","time_us":1767409065350834,"kind":"commit","commit":{"rev":"3mbifys5xcf2d","operation":"create","collection":"app.bsky.feed.like","rkey":"3mbifys5pif2d","record":{"$type":"app.bsky.feed.like","createdAt":"2026-01-03T02:57:46.163Z","subject":{"cid":"bafyreidaaa6ywqeibdqr7zofq3izz7obn7tb33zahbxi43j6hlo7c676ri","uri":"at://did:plc:fn5kv3xek2gi5tcjpxbiqs36/app.bsky.feed.post/3mbi5vkfugc2r"}},"cid":"bafyreiaqkz6pdolahycd4br3ppair4y7g4ysrfzai7zejcxsrzrrsffk5e"}}
+```
+```json
+{"did":"did:plc:dwcyhpgjtqmnwzjhocewd6g2","time_us":1767409065351346,"kind":"commit","commit":{"rev":"3mbifyrwb2g2l","operation":"create","collection":"app.bsky.graph.follow","rkey":"3mbifyrvwco2l","record":{"$type":"app.bsky.graph.follow","createdAt":"2026-01-03T02:57:44.771Z","subject":"did:plc:bggek3ttucom3nj5ufe2ocu5"},"cid":"bafyreidqnbclc6dy4c7swxfj3tgip7oebnxhupdlwziwhzqywt4bgjvvry"}}
+```
+```json
+{"did":"did:plc:jbqihdeo2viegbvjp7kq57xs","time_us":1767409065355523,"kind":"commit","commit":{"rev":"3mbifyrw3vu2q","operation":"create","collection":"app.bsky.feed.repost","rkey":"3mbifyrvp7m2q","record":{"$type":"app.bsky.feed.repost","createdAt":"2026-01-03T02:57:44.936Z","subject":{"cid":"bafyreigojgk7dpo3jkepvchqb6vu7szkdzrcn6nkobfwp4kenksqmdsywu","uri":"at://did:plc:7umb3asmcopiogfmpuxbhbbl/app.bsky.feed.post/3mbifjbmmys2s"}},"cid":"bafyreiaqzzxlkh5gimznwfuk5mfxyz47wurlwcaio7f5y74o4epr47huoq"}}
 
-// Immediately ask the server to switch protocols.
- ```
-Connection: Upgrade
-Upgrade: websocket
-```
-
-// Now send some websockets-specific bits
-```
-Sec-WebSocket-Version: 13
-Sec-WebSocket-Key: MTIzNDU2Nzg5MDEyMzQ1Ngo=
 ```
 ]
-
-// The key is just 16 random bytes
-// After this, the server starts sending data.
-
 
 ---
 
-// Now the response
-#titled-block(title: [Handshake (response)])[
-```
-HTTP/1.1 101 Switching Protocols
-```
+#align(center,
+table(columns:3, stroke:none, column-gutter: 1em,
+table.header([*Flavour*],[*Format*],[*Signatures?*]),
+table.hline(),
+[Original], [CBOR],[yes],
+[Jetstream],[JSON],[no],
+))
 
-```
-Connection: Upgrade
-Upgrade: websocket
-```
 
-```
-Server: jetstream
-Sec-WebSocket-Accept: UzQo2NzMDEyM1NggMTIzND5=
-```
-]
 
 // The "accept" string is a hash of the key we sent
 
@@ -137,7 +137,6 @@ Sec-WebSocket-Accept: UzQo2NzMDEyM1NggMTIzND5=
 #slide[
 #text(size:16pt)[
 ```json
-<81>~^A<F6>
 {
   "did": "did:plc:5rg4sbiiiesfe563zzqumetx",
   "time_us": 1763689821448290,
@@ -194,14 +193,16 @@ Remember the last timestamp you saw \
 
 #underline[Essential functionality]
 
-== Relays
+== Repeaters
 
-Data is distributed to clients via a network of relays
+// Relays are nodes which crawl the PDSes and generate a firehose.
+
+// Data is distributed to clients via a network of relays
 
 #let tree = it => align(center, tidy-tree-graph(
   text-size: 25pt,
   node-inset: 10pt,
-  spacing: (30pt, 50pt),
+  spacing: (10pt, 50pt),
   draw-node: ((name, label, pos)) => 
     (
       pos: (pos.x, pos.i),
@@ -224,32 +225,32 @@ Data is distributed to clients via a network of relays
 #alternatives(
 tree[
   - Firehose
-    - Relay
+    - Repeater
       - Client
       - Client
-    - Relay
+    - Repeater
       - Client
       - Client
-    - Relay
+    - Repeater
       - Client
       - Client
 ],
 tree[
   - Firehose
-    - Relay
+    - Repeater
       - Client
       - Client
-    - #text(red)[Relay]
+    - #text(red)[Repeater]
       - Client
       - Client
-    - Relay
+    - Repeater
       - Client
       - Client
 ],
 )
 
 #speaker-note[
-Some of these relays transform the data too, eg.
+Some of these repeaters transform the data too, eg.
 the "jetstream" format I mentioned.  Ours is just
 going to re-transmit the event data verbatim;
 adding transformations is easy if needed however.
@@ -261,36 +262,74 @@ adding transformations is easy if needed however.
 
 Typical event: \~0.5 KiB
 
-Bitrate: \~200 KiB/s
+Bitrate: \~1.6 Mbps // (200 KiB/s)
 
-#pause
+16.5 GiB/day
 
-// == Napkin maths
+#speaker-note[
+Our challenge is to feed this to as many simultenous clients as possible
+]
 
-// Easy to find servers with network cards that can do 10 gigabits
+== Theoretical limits
+
+#speaker-note[
+The hard upper bound is given by the network interface...
+
+Your machine probably has a 1-gigabit network card.  That can do 600 clients
+If you buy a server it will probably come with a 10-gig card.
+Amazon will rent you a machine with a 100- or even 200-gig NIC!
+
+]
+
+1Gbps NIC => \~600 simulteneous clients
+
 10Gbps NIC => \~6000 simulteneous clients
 
-// Amazon will rent you a machine with a 200 gigabit interface!
-200Gbps NIC => \~120k simulteneous clients!
+100Gbps NIC => \~60k simulteneous clients!
 
 #speaker-note[
-Clearly the amount of data
-currently flowing through the network
-is no problem for modern hardware
-but what about the software...?
+...but what about the software?
+can we write a program which can support 10s of thousands of clients?
 ]
 
-#pause
+---
 
-...but official implementation can only do 1 Gbps 😞
+1 syscall/event/client
+
+syscall overhead: _at least_ \~0.1μs
+
+=> \~25k clients/core
+
+0.5 KiB `write()`: a couple of μs => \~1k clients/core 😞
 
 #speaker-note[
-We can do better than that
-
-(Note: the official server is feature-rich and the code is clearly
-designed for flexibility, not performance.  We're going to go the
-other way though: no features, high performance.)
-
-Let's go!
+Ok, we're going to dive into an implementation now,
+but just keep this in mind:
+the name of the game is to cut down the amount of work being performed _per-client_
 ]
+// memcpy speed: \~3 GiB/s/core  ... or is it more like 10 GiB/s ??
+// => \~15k clients/core
+
+// So... with an 8-core machine we should be able to do it!
+
+// #speaker-note[
+// Clearly the amount of data
+// currently flowing through the network
+// is no problem for modern hardware
+// but what about the software...?
+// ]
+
+// #pause
+
+// ...but official implementation can only do 1 Gbps 😞
+
+// #speaker-note[
+// We can do better than that
+
+// (Note: the official server is feature-rich and the code is clearly
+// designed for flexibility, not performance.  We're going to go the
+// other way though: no features, high performance.)
+
+// Let's go!
+// ]
 

@@ -6,32 +6,10 @@ use std::io::prelude::*;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, SystemTime};
+use std::time::Duration;
 use tracing::*;
 use wsclient::{Frame, OpCode};
-
-#[derive(Ord, PartialOrd, Eq, PartialEq, Debug, Copy, Clone)]
-pub struct Timestamp(pub u64 /* epoch micros */);
-
-impl Timestamp {
-    fn now() -> Self {
-        Timestamp(
-            SystemTime::now()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .unwrap()
-                .as_micros()
-                .try_into()
-                .unwrap(),
-        )
-    }
-}
-
-impl std::ops::Sub<Duration> for Timestamp {
-    type Output = Timestamp;
-    fn sub(self, rhs: Duration) -> Self::Output {
-        Timestamp(self.0 - rhs.as_micros() as u64)
-    }
-}
+use wsserver::Timestamp;
 
 pub fn connect_to_upstream() -> anyhow::Result<Receiver<(Frame, Timestamp)>> {
     let (event_tx, event_rx) = std::sync::mpsc::channel();
@@ -44,49 +22,50 @@ pub fn connect_to_upstream() -> anyhow::Result<Receiver<(Frame, Timestamp)>> {
                 .name("event_recv".to_owned())
                 .spawn(|| crate::upstream::jetstream_iter(frames, event_tx))?
         }
-        Err(_) => std::thread::Builder::new()
-            .name("event_recv".to_owned())
-            .spawn(|| fake_iter(event_tx))?,
+        Err(_) => panic!(),
+        // std::thread::Builder::new()
+        //     .name("event_recv".to_owned())
+        //     .spawn(|| fake_iter(event_tx))?,
     };
     info!("Connected to upstream");
     Ok(event_rx)
 }
 
-pub fn fake_iter(event_tx: Sender<(Frame, Timestamp)>) -> anyhow::Result<()> {
-    let mut txt = format!(
-        "{{ \"time_us\": {:0>16}, \"padding\": \"{:>6500}\" }}",
-        0, ' '
-    )
-    .into_bytes();
-    // let mut txt = format!(
-    //     "{{ \"time_us\": {:0>16}, \"padding\": \"{:>65000}\" }}",
-    //     0, ' '
-    // )
-    // .into_bytes();
-    let mut prev = Timestamp::now().0 / 1_000_000;
-    let target=  50 /* Hz */;
-    let mut frame = Frame::text(std::str::from_utf8(&txt).unwrap());
-    let mut sent = 0;
-    loop {
-        if sent >= target {
-            let sleep = (prev + 1) * 1_000_000 - Timestamp::now().0;
-            std::thread::sleep(Duration::from_micros(sleep));
-        }
-        let ts = Timestamp::now();
+// pub fn fake_iter(event_tx: Sender<(Frame, Timestamp)>) -> anyhow::Result<()> {
+//     let mut txt = format!(
+//         "{{ \"time_us\": {:0>16}, \"padding\": \"{:>500}\" }}",
+//         0, ' '
+//     )
+//     .into_bytes();
+//     // let mut txt = format!(
+//     //     "{{ \"time_us\": {:0>16}, \"padding\": \"{:>65000}\" }}",
+//     //     0, ' '
+//     // )
+//     // .into_bytes();
+//     let mut prev = Timestamp::now().0 / 1_000_000;
+//     let target = 400 /* Hz */;
+//     let mut frame = Frame::text(std::str::from_utf8(&txt).unwrap());
+//     let mut sent = 0;
+//     loop {
+//         if sent >= target {
+//             let sleep = (prev + 1) * 1_000_000 - Timestamp::now().0;
+//             std::thread::sleep(Duration::from_micros(sleep));
+//         }
+//         let ts = Timestamp::now();
 
-        let this = ts.0 / 1_000_000;
-        if this != prev {
-            sent = 0;
-            let mut cursor = std::io::Cursor::new(&mut txt[13..]);
-            write!(cursor, "{:>16}", ts.0)?;
-            frame = Frame::text(std::str::from_utf8(&txt)?);
-        }
-        prev = this;
+//         let this = ts.0 / 1_000_000;
+//         if this != prev {
+//             sent = 0;
+//             let mut cursor = std::io::Cursor::new(&mut txt[13..]);
+//             write!(cursor, "{:>16}", ts.0)?;
+//             frame = Frame::text(std::str::from_utf8(&txt)?);
+//         }
+//         prev = this;
 
-        sent += 1;
-        event_tx.send((frame.clone(), ts))?;
-    }
-}
+//         sent += 1;
+//         event_tx.send((frame.clone(), ts))?;
+//     }
+// }
 
 pub fn jetstream_iter(
     ws_iter: impl Iterator<Item = std::io::Result<Frame>>,
@@ -106,7 +85,7 @@ pub fn mk_stat_printer() -> impl FnMut(&Frame, Timestamp, u64) {
     struct MsgStats {
         n_msgs: usize,
         n_bytes: usize,
-        hash: u64,
+        // hash: u64,
     }
     let mut last_ts_sec = 0;
     let mut stats = MsgStats::default();
@@ -115,8 +94,7 @@ pub fn mk_stat_printer() -> impl FnMut(&Frame, Timestamp, u64) {
         if ts_sec != last_ts_sec {
             let stats = std::mem::take(&mut stats);
             info!(
-                "[{last_ts_sec}] {:#x} ({} evs, {} MiB = {} Mbps), {} MiB total",
-                stats.hash,
+                "[{last_ts_sec}] ({} evs, {} MiB = {} Mbps), {} MiB total",
                 stats.n_msgs,
                 stats.n_bytes / 1024 / 1024,
                 stats.n_bytes * 8 / 1024 / 1024,
@@ -126,9 +104,9 @@ pub fn mk_stat_printer() -> impl FnMut(&Frame, Timestamp, u64) {
         }
         stats.n_bytes += frame.bytes.len();
         stats.n_msgs += 1;
-        for bytes in frame.payload().chunks_exact(8) {
-            stats.hash ^= u64::from_le_bytes(bytes.try_into().unwrap());
-        }
+        // for bytes in frame.payload().chunks_exact(8) {
+        //     stats.hash ^= u64::from_le_bytes(bytes.try_into().unwrap());
+        // }
     }
 }
 
@@ -155,6 +133,10 @@ pub fn copy_frames_to_file(
     let mut first_timestamp = Timestamp(0);
     let mut print_stats = crate::upstream::mk_stat_printer();
     for (frame, ts) in iter {
+        file.write_all(&frame.bytes)?;
+        // file.flush()?;
+        let n = frame.bytes.len() as u64;
+        trace!("Wrote {n} bytes");
         match handle_frame(&mut first_timestamp, &mut file, &file_len, &frame, ts) {
             Ok(file_len) => print_stats(&frame, ts, file_len),
             Err(e) => warn!("Bad frame: {e:#}"),
@@ -163,7 +145,7 @@ pub fn copy_frames_to_file(
     Ok(())
 }
 
-fn handle_frame(
+pub fn handle_frame(
     first_timestamp: &mut Timestamp,
     file: &mut File,
     file_len: &AtomicU64,

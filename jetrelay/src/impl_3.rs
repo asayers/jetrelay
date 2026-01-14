@@ -30,7 +30,7 @@ pub fn run() -> Result<()> {
         .name("client_listener".to_owned())
         .spawn(move || {
             listen_for_clients(listener, client_tx, |mut conn| {
-                let config = crate::handshake::perform_handshake(&mut conn)?;
+                let config = wsserver::perform_handshake(&mut conn)?;
                 conn.set_nonblocking(true)?;
                 Ok(Client::new(conn, config, &file_len_2))
             })

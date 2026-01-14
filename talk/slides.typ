@@ -34,10 +34,10 @@
 )
 #show heading: set block(below: 1em)
 
-#include("jetstream.typ")
-#include("impl-1.typ")
+#include("1-bluesky.typ")
+#include("2-tokio.typ")
 #include("multicast.typ")
-#include("impl-2.typ")
+#include("3-adaptive.typ")
 #include("zero-copy.typ")
 #include("impl-3.typ")
 #include("io-uring.typ")

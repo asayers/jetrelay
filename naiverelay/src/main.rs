@@ -13,7 +13,7 @@ use tokio::{
     sync::broadcast::{self, Receiver},
 };
 use tokio_tungstenite::tungstenite::{Message, Utf8Bytes};
-use tracing::{Level, error, info};
+use tracing::{Level, error, info, warn};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
@@ -86,8 +86,16 @@ async fn main() -> Result<()> {
 async fn handle_client(stream: TcpStream, mut rx: Receiver<Utf8Bytes>) -> Result<()> {
     let mut ws = tokio_tungstenite::accept_async(stream).await?;
     info!("Client connected");
-    while let Ok(msg) = rx.recv().await {
-        ws.send(Message::Text(msg)).await?;
+    loop {
+        match rx.recv().await {
+            Ok(msg) => ws.send(Message::Text(msg)).await?,
+            Err(broadcast::error::RecvError::Closed) => {
+                error!("Shutting down");
+                return anyhow::Ok(());
+            }
+            Err(broadcast::error::RecvError::Lagged(x)) => {
+                warn!("Lagged: {x}");
+            }
+        }
     }
-    anyhow::Ok(())
 }

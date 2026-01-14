@@ -1,6 +1,6 @@
-use crate::BUFFER;
 use crate::client::{Client, listen_for_clients};
 use crate::upstream::connect_to_upstream;
+use crate::{BUFFER, MAX_SEND};
 use anyhow::{Context, Result};
 use slab::Slab;
 use std::io::{ErrorKind, Write};
@@ -28,7 +28,7 @@ pub fn run() -> Result<()> {
         .name("client_listener".to_owned())
         .spawn(move || {
             listen_for_clients(listener, client_tx, |mut conn| {
-                let config = crate::handshake::perform_handshake(&mut conn)?;
+                let config = wsserver::perform_handshake(&mut conn)?;
                 conn.set_nonblocking(true)?;
                 Ok(Client::new(conn, config, &file_len_2))
             })
@@ -69,7 +69,6 @@ pub fn run() -> Result<()> {
             if client.offset / BUFFER < n_pages {
                 let data = data.lock().unwrap();
                 let last_page = client.offset / BUFFER;
-                const MAX_SEND: u64 = 64; // pages
                 let slice = &data[(client.offset as usize)
                     ..(((last_page + MAX_SEND).min(n_pages) * BUFFER) as usize)];
                 // let slice = &data[(client.offset as usize)..((n_pages * BUFFER) as usize)];

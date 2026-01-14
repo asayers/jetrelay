@@ -11,15 +11,15 @@
 #show heading: set text(size: 40pt)
 
 #v(1fr)
-= #h(-6em) Let's write!
+= #h(-6em) Serving the Bluesky firehose
 #v(-1em)
-= #h(2em) A relay for Bluesky
+= #h(2em) to 100k subscribers
 
 #v(1fr)
 
 #text(style:"italic", size: 25pt )[
-High-throughput networking \
-with Rust and Linux
+An TCP multicast optimization adventure \
+with Linux and Rust
 ]
 
 #v(1fr)

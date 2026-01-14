@@ -1,0 +1,2 @@
+websocat wss://jetstream1.us-east.bsky.network/subscribe
+ncat --ssl jetstream2.us-west.bsky.network 443 | head -c1000

@@ -7,6 +7,7 @@ use rustix::fd::AsRawFd;
 use rustix::fs::{MemfdFlags, memfd_create};
 use slab::Slab;
 use std::fs::File;
+use std::io::Write;
 use std::net::{SocketAddr, TcpListener};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -24,7 +25,7 @@ pub fn run() -> Result<()> {
     let uring_fd = uring.as_raw_fd();
     info!(fd = uring_fd, "Set up the uring");
 
-    let file = create_file()?;
+    let mut file = create_file()?;
     uring
         .submitter()
         .register_files_update(0, &[file.as_raw_fd()])?;
@@ -45,8 +46,7 @@ pub fn run() -> Result<()> {
         .name("client_listener".to_owned())
         .spawn(move || {
             listen_for_clients(listener, client_tx, |mut conn| {
-                let config = crate::handshake::perform_handshake(&mut conn)?;
-                conn.set_nonblocking(true)?;
+                let config = wsserver::perform_handshake(&mut conn)?;
                 Ok(Client::new(conn, config, &file_len_2).try_into()?)
             })
         })?;
@@ -58,7 +58,19 @@ pub fn run() -> Result<()> {
     let file_len_2 = file_len.clone();
     std::thread::Builder::new()
         .name("event_writer".to_owned())
-        .spawn(move || crate::upstream::copy_frames_to_file(file, file_len_2, event_rx).unwrap())?;
+        .spawn(move || {
+            let _g = info_span!("upstream copier thread").entered();
+            info!("Copying data from upstream");
+            let mut print_stats = crate::upstream::mk_stat_printer();
+            for (frame, ts) in event_rx {
+                file.write_all(&frame.bytes)?;
+                let n = frame.bytes.len() as u64;
+                trace!("Wrote {n} bytes");
+                let offset = file_len_2.fetch_add(n, Ordering::Release);
+                print_stats(&frame, ts, offset);
+            }
+            anyhow::Ok(())
+        })?;
 
     let mut sqes = Vec::new();
 
@@ -84,7 +96,9 @@ pub fn run() -> Result<()> {
             let mut sq = uring.submission();
             let limit = (sq.capacity() - sq.len()).min(sqes.len());
             unsafe { sq.push_multiple(&sqes[..limit]).context("push_multiple")? };
-            sqes.drain(..limit);
+            for sqe in sqes.drain(..limit) {
+                debug!("Submit {sqe:?}")
+            }
         }
         trace!("(Waiting for completions...)");
         const RUNLOOP_TIMEOUT: Timespec = Timespec::new().sec(1);

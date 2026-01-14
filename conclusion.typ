@@ -1,13 +1,25 @@
 
 
 
+Notes from andrew:
+
+- Add some pseudocode to the diagram slides
+- Title: write() write() write()
+- He thought the "many writes" slide meant a big chunk of the vec was being copied, not multiple copies
+    - suggests a vertical frag cache, or maybe scattered?  (But it's a bump arena...)
+- 
+
+
+
+Conclusions:
+
 - A single box can serve a lot of clients!
-  - if you milk that box for all it's worth
+    - if you milk that box for all it's worth
 - Writing platform-agnostic code is noble
-  - but going platform-specific unlocks many cool features
-  - if you're writing software in-house, you probably know _exactly_ where it will be run
+    - but going platform-specific unlocks many cool features
+    - if you're writing software in-house, you probably know _exactly_ where it will be run
 - Relinquishing ownership of your data over to the kernel can be useful
-  - you can get it back again with `mmap()`, if you need to
+    - you can get it back again with `mmap()`, if you need to
 
 
 

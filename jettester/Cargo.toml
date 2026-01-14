@@ -6,8 +6,11 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.100"
 bpaf = { version = "0.9.20", features = ["derive"] }
+futures = "0.3.31"
 gjson = "0.8.1"
 jiff = "0.2.16"
 rlimit = "0.10.2"
+tokio = { version = "1.49.0", features = ["full"] }
+tokio-tungstenite = { version = "0.28.0", features = ["rustls-tls-webpki-roots"] }
 url = "2.5.7"
 wsclient = { version = "0.1.0", path = "../wsclient" }
