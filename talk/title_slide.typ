@@ -11,19 +11,18 @@
 #show heading: set text(size: 40pt)
 
 #v(1fr)
-= #h(-6em) Serving the Bluesky firehose
-#v(-1em)
-= #h(2em) to 100k subscribers
+= Saturating the NIC
+#v(0.5cm)
 
-#v(1fr)
-
-#text(style:"italic", size: 25pt )[
-An TCP multicast optimization adventure \
-with Linux and Rust
+#text(size: 30pt,  fill: maroon.lighten(90%))[
+An optimization adventure \
+with Rust and Linux
 ]
 
 #v(1fr)
+#text(style:"italic", size: 25pt, fill: maroon.lighten(80%))[
 Alex Sayers
+]
 #v(1fr)
 
 // #friendly.title-slide(

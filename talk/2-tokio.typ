@@ -5,28 +5,26 @@
 
 == Shopping for components
 
-- tokio
-    - `broadcast::channel()`
-    - Each sent value is seen by all consumers
-
 - tungstenite
     - `connect_async()` - handshake w/ server
     - `accept_async()` - handshake w/ client
     - You get a `Stream<Message>`
 
+- tokio's `broadcast::channel()`
+    - Each sent value is seen by all consumers
 
 == Implementation \#1
 
 // New events arrive from upstream,
 // need to be copied to all connected clients
 
-#text(14pt)[
+#text(18pt)[
 // #set page(columns:2)
 
 ```rust
+let (tx, rx) = channel::<Message>(1024);
 let (mut upstream, _) = connect_async("wss://jetstream...").await?;
 let sock = TcpListener::bind("0.0.0.0:80").await?;
-let (tx, rx) = channel::<Message>(1024);
 ```
 
 #grid(columns:2, gutter: 1em,
@@ -112,11 +110,6 @@ Error: Too many open files (os error 24)
 systemd-run --user -p LimitNOFILE=100000 -p CPUQuota=100%
 ```
 
-#speaker-note[
-Single core
-loopback interface
-]
-
 ---
 
 // Can manage \~9.8 Gbps
@@ -127,7 +120,7 @@ loopback interface
 
 #table(columns:3, inset: 0.5em,
 table.header([*Impl*], [*Throughput*], [*Clients*]),
-[tokio+tungstenite], [9.8 Gbps], [6.5k],
+[Non-blocking I/O], [10 Gbps], [6.5k],
 [???], [??? Gbps], [???],
 [???], [??? Gbps], [???],
 [???], [??? Gbps], [???],
@@ -135,11 +128,12 @@ table.header([*Impl*], [*Throughput*], [*Clients*]),
 
 #small[(single core, loopback interface)]
 
-// Performance is not bad!
+#speaker-note[
+Notes about benchmarks:
+- Single core
+- loopback interface
+]
 
-// 13.2 Gbps (on loopback with 20% of a core)
-
-// Can we do better...?
 
 
 

@@ -7,11 +7,23 @@
 
 == Bluesky
 
-Twitter clone
+Twitter clone, all data publically available
 
-All data publically available
+"The firehose"
 
-// Goal: open ecosystem, alternative frontends, etc.
+#align(center,
+table(columns:3, stroke:none, column-gutter: 1em,
+table.header([*Flavour*],[*Format*],[*Signatures?*]),
+table.hline(),
+[Original], [CBOR],[yes],
+[Jetstream],[JSON],[no],
+))
+
+eg.:
+
+#align(center)[
+`wss://jetstream2.us-west.bsky.network/subscribe`
+]
 
 #speaker-note[
 - Lookup someone's handle and see all their tweets
@@ -44,13 +56,6 @@ All data publically available
 - Let's see if we can get the server to talk to us
 - `ws:` scheme means it wants to speak the "websockets" protocol
 ]
-#v(1fr)
-#align(center)[
-`wss://jetstream2.us-west.bsky.network/subscribe`
-]
-#v(1fr)
-
----
 
 #text(size:12pt)[
 #show raw: it => it.text.codepoints().join(sym.zws)
@@ -86,14 +91,6 @@ $ websocat wss://jetstream2.us-west.bsky.network/subscribe
 ]
 
 ---
-
-#align(center,
-table(columns:3, stroke:none, column-gutter: 1em,
-table.header([*Flavour*],[*Format*],[*Signatures?*]),
-table.hline(),
-[Original], [CBOR],[yes],
-[Jetstream],[JSON],[no],
-))
 
 
 
@@ -292,15 +289,11 @@ Amazon will rent you a machine with a 100- or even 200-gig NIC!
 can we write a program which can support 10s of thousands of clients?
 ]
 
----
-
-1 syscall/event/client
-
-syscall overhead: _at least_ \~0.1μs
-
-=> \~25k clients/core
-
-0.5 KiB `write()`: a couple of μs => \~1k clients/core 😞
+// ---
+// 1 syscall/event/client
+// syscall overhead: _at least_ \~0.1μs
+// => \~25k clients/core
+// 0.5 KiB `write()`: a couple of μs => \~1k clients/core 😞
 
 #speaker-note[
 Ok, we're going to dive into an implementation now,

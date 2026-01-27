@@ -36,13 +36,15 @@
 
 #include("1-bluesky.typ")
 #include("2-tokio.typ")
-#include("multicast.typ")
-#include("3-adaptive.typ")
-#include("zero-copy.typ")
-#include("impl-3.typ")
+#include("3-websockets.typ")
+#include("4-adaptive.typ")
+#include("5-zero-copy.typ")
+// #include("impl-3.typ")
 #include("io-uring.typ")
-#include("impl-4.typ")
-#include("hole-punch.typ")
+// #include("impl-4.typ")
+// #include("hole-punch.typ")
+#include("conclusion.typ")
+#include("multicast.typ")
 
 // #friendly.last-slide(
 //   title: [That's it!],
