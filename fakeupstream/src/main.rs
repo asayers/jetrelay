@@ -27,8 +27,8 @@ fn main() -> anyhow::Result<()> {
     loop {
         let (mut conn, addr) = listener.accept()?;
         println!("addr={addr:?}");
-        // let config = wsserver::perform_handshake(&mut conn)?;
-        // println!("config={config:?}");
+        let config = wsserver::perform_handshake(&mut conn)?;
+        println!("config={config:?}");
 
         let mut prev = Timestamp::now().0 / 1_000_000;
         let mut frame = Frame::text(std::str::from_utf8(&txt).unwrap());

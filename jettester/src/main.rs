@@ -148,7 +148,10 @@ pub async fn main() {
     });
     let start = Instant::now();
     let mut prev_mibytes = 0.;
-    let mut avg = 0.;
+    let mut avg1 = 0.;
+    let mut avg2 = 0.;
+    let mut avg3 = 0.;
+    let mut avg4 = 0.;
     loop {
         // let mut oldest_ts = u64::MAX;
         // let mut total_count = 0;
@@ -228,13 +231,25 @@ pub async fn main() {
         WORST_CLIENT_3.store(usize::MAX, Ordering::Release);
         let rate = (n_mibytes - prev_mibytes) * 8. / 1024.;
         prev_mibytes = n_mibytes;
-        avg += rate;
-        avg /= 2.0;
+        avg1 += rate;
+        avg1 /= 2.0;
+        avg2 *= 3.;
+        avg2 += rate;
+        avg2 /= 4.0;
+        avg3 *= 7.;
+        avg3 += rate;
+        avg3 /= 8.0;
+        avg4 *= 15.;
+        avg4 += rate;
+        avg4 /= 16.0;
         println!(
-            "{:.2}/{:.2} Gbps ({:.2} avg) ({n_clients} connected), worst: {worst_client} ({:.1}s, {:.1}s/{:.1}s/{:.1}s/{:.1}s)",
+            "{:.2}, {:.2}, {:.2}, {:.2}, {:.2} /{:.2} Gbps ({n_clients} connected), worst: {worst_client} ({:.1}s, {:.1}s/{:.1}s/{:.1}s/{:.1}s)",
             rate,
+            avg1,
+            avg2,
+            avg3,
+            avg4,
             1.56 * n_clients as f32 / 1024.,
-            avg,
             (Timestamp::now() - worst_client).get_seconds(),
             (Timestamp::now() - worst_client_0).get_seconds(),
             (Timestamp::now() - worst_client_1).get_seconds(),
@@ -306,18 +321,20 @@ async fn worker(
             }
         };
 
-        let timestamp: u64 = payload
-            .strip_prefix(r#"{ "time_us": "#)
-            .context("1")
-            .and_then(|x| {
-                x.strip_suffix(r#"" }"#)
-                    .context("2")?
-                    .trim_end()
-                    .strip_suffix(r#", "padding": ""#)
-                    .context("3")
-            })?
-            .parse()?;
-
+        // eg. 1769926469000117
+        // let timestamp: u64 = 0;
+        let timestamp: u64 = payload[13..29].parse()?;
+        // let timestamp: u64 = payload
+        //     .strip_prefix(r#"{ "time_us": "#)
+        //     .context("1")
+        //     .and_then(|x| {
+        //         x.strip_suffix(r#"" }"#)
+        //             .context("2")?
+        //             .trim_end()
+        //             .strip_suffix(r#", "padding": ""#)
+        //             .context("3")
+        //     })?
+        //     .parse()?;
         // let timestamp = gjson::get(payload, "time_us").u64();
 
         if dump {

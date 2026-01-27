@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use futures::{SinkExt, StreamExt};
 use std::{
     net::SocketAddr,
@@ -9,8 +9,8 @@ use std::{
     time::Duration,
 };
 use tokio::{
-    net::{TcpListener, TcpStream},
-    sync::broadcast::{self, Receiver},
+    net::TcpListener,
+    sync::broadcast::{self},
 };
 use tokio_tungstenite::tungstenite::{Message, Utf8Bytes};
 use tracing::{Level, error, info, warn};
@@ -29,14 +29,20 @@ async fn main() -> Result<()> {
 
     // Bind the listener socket
     let var = "JETRELAY_PORT";
-    let port: u16 = std::env::var(var).context(var)?.parse().context(var)?;
+    let port: u16 = match std::env::var(var) {
+        Ok(x) => x.parse()?,
+        Err(_) => 7375,
+    };
     let listen_addr = SocketAddr::new([0, 0, 0, 0].into(), port);
     let listener = TcpListener::bind(listen_addr).await?;
     info!(%listen_addr, "Bound listener");
 
     // Connect to upstream
     let var = "UPSTREAM_URL";
-    let upstream_url = std::env::var(var).context(var)?;
+    let upstream_url = match std::env::var(var) {
+        Ok(x) => x,
+        Err(_) => "ws://localhost:7376/subscribe".to_string(),
+    };
     let (mut upstream, _) = tokio_tungstenite::connect_async(&upstream_url).await?;
     info!(%upstream_url, "Connected to upstream");
 
@@ -70,32 +76,29 @@ async fn main() -> Result<()> {
         }
     });
 
-    while let Ok((stream, _)) = listener.accept().await {
-        let rx = rx.resubscribe();
+    while let Ok((conn, _)) = listener.accept().await {
+        let mut rx = rx.resubscribe();
         tokio::spawn(async move {
-            match handle_client(stream, rx).await {
-                Ok(()) => (),
-                Err(e) => error!("{e:#}"),
+            // Do the websockets handshake
+            let mut ws = tokio_tungstenite::accept_async(conn).await?;
+            info!("Client connected");
+            loop {
+                match rx.recv().await {
+                    Ok(msg) => match ws.send(Message::Text(msg)).await {
+                        Ok(()) => (),
+                        Err(e) => error!("{e:#}"),
+                    },
+                    Err(broadcast::error::RecvError::Closed) => {
+                        error!("Shutting down");
+                        return anyhow::Ok(());
+                    }
+                    Err(broadcast::error::RecvError::Lagged(x)) => {
+                        warn!("Lagged: {x}");
+                    }
+                }
             }
         });
     }
 
     Ok(())
-}
-
-async fn handle_client(stream: TcpStream, mut rx: Receiver<Utf8Bytes>) -> Result<()> {
-    let mut ws = tokio_tungstenite::accept_async(stream).await?;
-    info!("Client connected");
-    loop {
-        match rx.recv().await {
-            Ok(msg) => ws.send(Message::Text(msg)).await?,
-            Err(broadcast::error::RecvError::Closed) => {
-                error!("Shutting down");
-                return anyhow::Ok(());
-            }
-            Err(broadcast::error::RecvError::Lagged(x)) => {
-                warn!("Lagged: {x}");
-            }
-        }
-    }
 }

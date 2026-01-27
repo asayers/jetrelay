@@ -71,33 +71,37 @@ pub fn perform_handshake(conn: &mut TcpStream) -> Result<ClientConfig> {
     let mut n = 0;
     loop {
         n += conn.read(&mut buf[n..])?;
-        let mut headers = [httparse::EMPTY_HEADER; 16];
-        let mut req = httparse::Request::new(&mut headers);
-        let status = req.parse(&buf[..n])?;
-
-        match status {
-            httparse::Status::Complete(_) => {
-                match validate_request(req).and_then(|(key, query_params)| {
-                    let config = ClientConfig::from_query_params(query_params)?;
-                    validate_config(&config)?;
-                    Ok((key, config))
-                }) {
-                    Ok((key, config)) => {
-                        send_response(conn, key)?;
-                        debug!(cursor = config.cursor.map(|x| x.0), "Handshake complete");
-                        return Ok(config);
-                    }
-                    Err(e) => {
-                        writeln!(conn, "HTTP/1.1 500 {e:#}\r")?;
-                        writeln!(conn, "\r")?;
-                        conn.flush()?;
-                        conn.shutdown(std::net::Shutdown::Both)?;
-                        return Err(e);
-                    }
-                }
+        match parse_headers(&buf[..n]) {
+            Ok(Some((resp, config))) => {
+                conn.write_all(resp.as_bytes())?;
+                debug!(cursor = config.cursor.map(|x| x.0), "Handshake complete");
+                return Ok(config);
             }
-            httparse::Status::Partial => (), // loop
+            Ok(None) => (), // loop
+            Err(e) => {
+                writeln!(conn, "HTTP/1.1 500 {e:#}\r")?;
+                writeln!(conn, "\r")?;
+                conn.flush()?;
+                conn.shutdown(std::net::Shutdown::Both)?;
+                return Err(e);
+            }
         }
+    }
+}
+
+pub fn parse_headers(buf: &[u8]) -> Result<Option<(String, ClientConfig)>> {
+    let mut headers = [httparse::EMPTY_HEADER; 16];
+    let mut req = httparse::Request::new(&mut headers);
+    let status = req.parse(buf)?;
+
+    match status {
+        httparse::Status::Complete(_) => validate_request(req).and_then(|(key, query_params)| {
+            let config = ClientConfig::from_query_params(query_params)?;
+            validate_config(&config)?;
+            let resp = mk_response(key);
+            Ok(Some((resp, config)))
+        }),
+        httparse::Status::Partial => Ok(None),
     }
 }
 
@@ -151,22 +155,25 @@ fn validate_request<'b>(req: httparse::Request<'_, 'b>) -> Result<(&'b [u8], &'b
     Ok((key, query_params))
 }
 
-fn send_response(conn: &mut TcpStream, key: &[u8]) -> Result<()> {
-    let accept = {
-        use base64::prelude::*;
-        let magic = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-        let mut buf = Vec::with_capacity(key.len() + magic.len());
-        buf.extend(key);
-        buf.extend(magic);
-        BASE64_STANDARD.encode(sha1_smol::Sha1::from(buf).digest().bytes())
-    };
+fn accept_code(key: &[u8]) -> String {
+    use base64::prelude::*;
+    let magic = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+    let mut buf = Vec::with_capacity(key.len() + magic.len());
+    buf.extend(key);
+    buf.extend(magic);
+    BASE64_STANDARD.encode(sha1_smol::Sha1::from(buf).digest().bytes())
+}
 
-    writeln!(conn, "HTTP/1.1 101 Switching Protocols\r")?;
-    writeln!(conn, "Connection: Upgrade\r")?;
-    writeln!(conn, "Upgrade: websocket\r")?;
-    writeln!(conn, "Server: jetrelay\r")?;
-    writeln!(conn, "Sec-WebSocket-Accept: {accept}\r")?;
-    writeln!(conn, "\r")?;
-
-    Ok(())
+fn mk_response(key: &[u8]) -> String {
+    let accept = accept_code(key);
+    format!(
+        "\
+HTTP/1.1 101 Switching Protocols\r
+Connection: Upgrade\r
+Upgrade: websocket\r
+Server: jetrelay\r
+Sec-WebSocket-Accept: {accept}\r
+\r
+"
+    )
 }

@@ -2,14 +2,13 @@ use crate::BUFFER;
 use crate::client::{Client, listen_for_clients};
 use crate::impl_5::create_file;
 use crate::upstream::{connect_to_upstream, copy_frames_to_file};
-use anyhow::{Context, Result};
+use anyhow::Result;
 use rustix::fs::sendfile;
 use slab::Slab;
 use std::io::ErrorKind;
 use std::net::{SocketAddr, TcpListener};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, mpsc};
-use std::time::Duration;
 use tracing::*;
 
 pub fn run() -> Result<()> {
@@ -18,7 +17,10 @@ pub fn run() -> Result<()> {
 
     // Bind the listener socket ASAP
     let var = "JETRELAY_PORT";
-    let port: u16 = std::env::var(var).context(var)?.parse().context(var)?;
+    let port: u16 = match std::env::var(var) {
+        Ok(x) => x.parse()?,
+        Err(_) => 7375,
+    };
     let listen_addr = SocketAddr::new([0, 0, 0, 0].into(), port);
     let listener = TcpListener::bind(listen_addr)?;
     info!(%listen_addr, "Bound socket");
@@ -40,15 +42,17 @@ pub fn run() -> Result<()> {
 
     let file_len_2 = file_len.clone();
     let file_2 = file.try_clone()?;
+    let t = std::thread::current();
     std::thread::Builder::new()
         .name("event_writer".to_owned())
-        .spawn(move || copy_frames_to_file(file_2, file_len_2, event_rx))?;
+        .spawn(move || copy_frames_to_file(file_2, file_len_2, event_rx, t))?;
     info!("Connected to upstream");
 
     let mut clients = Slab::<Client>::default();
 
     info!("Starting runloop");
     loop {
+        std::thread::park();
         while let Ok(client) = client_rx.try_recv() {
             let client_id = clients.insert(client);
             debug!(client_id, "Client registered");
@@ -73,6 +77,6 @@ pub fn run() -> Result<()> {
             }
             true
         });
-        std::thread::sleep(Duration::from_millis(10))
+        // std::thread::sleep(Duration::from_millis(10))
     }
 }

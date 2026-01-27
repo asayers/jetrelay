@@ -31,28 +31,20 @@ fn main() -> Result<()> {
     // Set up the uring
     let mut uring = IoUring::builder()
         .setup_single_issuer()
+        .setup_coop_taskrun()
         .setup_defer_taskrun()
-        .build(1024)
+        .build(8192)
         .context("Build ring")?;
     uring.submitter().register_files_sparse(1)?;
     let uring_fd = uring.as_raw_fd();
     info!(fd = uring_fd, "Set up the uring");
 
-    // unsafe {
-    //     let mut data = DATA.lock().unwrap();
-    //     uring
-    //         .submitter()
-    //         .register_buffers(&[libc::iovec {
-    //             iov_base: data.as_mut_ptr() as _,
-    //             iov_len: MAX_DATA,
-    //         }])
-    //         .context("Register buf")?
-    // };
-    // debug!("Registered buffer with the uring");
-
     // Bind the listener socket ASAP
     let var = "JETRELAY_PORT";
-    let port: u16 = std::env::var(var).context(var)?.parse().context(var)?;
+    let port: u16 = match std::env::var(var) {
+        Ok(x) => x.parse()?,
+        Err(_) => 7375,
+    };
     let listen_addr = SocketAddr::new([0, 0, 0, 0].into(), port);
     let listener = TcpListener::bind(listen_addr)?;
     info!(%listen_addr, "Bound socket");
@@ -68,7 +60,10 @@ fn main() -> Result<()> {
     let mut clients = Slab::<Client>::default();
 
     let var = "UPSTREAM_URL";
-    let url = std::env::var(var).context(var)?.parse().context(var)?;
+    let url = match std::env::var(var) {
+        Ok(x) => x.parse()?,
+        Err(_) => "ws://localhost:7376/subscribe".parse()?,
+    };
     let frames = wsclient::connect_websocket(&url)?;
     info!("Connected to upstream");
 

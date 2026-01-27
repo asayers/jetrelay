@@ -40,9 +40,10 @@ pub fn run() -> Result<()> {
 
     let file_len_2 = file_len.clone();
     let file_2 = file.try_clone()?;
+    let t = std::thread::current();
     std::thread::Builder::new()
         .name("event_writer".to_owned())
-        .spawn(move || copy_frames_to_file(file_2, file_len_2, event_rx))?;
+        .spawn(move || copy_frames_to_file(file_2, file_len_2, event_rx, t))?;
     info!("Connected to upstream");
 
     let mut clients = Slab::<ClientWithPipe>::default();

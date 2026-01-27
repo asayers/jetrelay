@@ -14,58 +14,17 @@ use wsserver::Timestamp;
 pub fn connect_to_upstream() -> anyhow::Result<Receiver<(Frame, Timestamp)>> {
     let (event_tx, event_rx) = std::sync::mpsc::channel();
     let var = "UPSTREAM_URL";
-    match std::env::var(var) {
-        Ok(url) => {
-            let url = url.parse().context(var)?;
-            let frames = wsclient::connect_websocket(&url)?;
-            std::thread::Builder::new()
-                .name("event_recv".to_owned())
-                .spawn(|| crate::upstream::jetstream_iter(frames, event_tx))?
-        }
-        Err(_) => panic!(),
-        // std::thread::Builder::new()
-        //     .name("event_recv".to_owned())
-        //     .spawn(|| fake_iter(event_tx))?,
+    let url = match std::env::var(var) {
+        Ok(x) => x.parse()?,
+        Err(_) => "ws://localhost:7376/subscribe".parse()?,
     };
+    let frames = wsclient::connect_websocket(&url)?;
+    std::thread::Builder::new()
+        .name("event_recv".to_owned())
+        .spawn(|| crate::upstream::jetstream_iter(frames, event_tx))?;
     info!("Connected to upstream");
     Ok(event_rx)
 }
-
-// pub fn fake_iter(event_tx: Sender<(Frame, Timestamp)>) -> anyhow::Result<()> {
-//     let mut txt = format!(
-//         "{{ \"time_us\": {:0>16}, \"padding\": \"{:>500}\" }}",
-//         0, ' '
-//     )
-//     .into_bytes();
-//     // let mut txt = format!(
-//     //     "{{ \"time_us\": {:0>16}, \"padding\": \"{:>65000}\" }}",
-//     //     0, ' '
-//     // )
-//     // .into_bytes();
-//     let mut prev = Timestamp::now().0 / 1_000_000;
-//     let target = 400 /* Hz */;
-//     let mut frame = Frame::text(std::str::from_utf8(&txt).unwrap());
-//     let mut sent = 0;
-//     loop {
-//         if sent >= target {
-//             let sleep = (prev + 1) * 1_000_000 - Timestamp::now().0;
-//             std::thread::sleep(Duration::from_micros(sleep));
-//         }
-//         let ts = Timestamp::now();
-
-//         let this = ts.0 / 1_000_000;
-//         if this != prev {
-//             sent = 0;
-//             let mut cursor = std::io::Cursor::new(&mut txt[13..]);
-//             write!(cursor, "{:>16}", ts.0)?;
-//             frame = Frame::text(std::str::from_utf8(&txt)?);
-//         }
-//         prev = this;
-
-//         sent += 1;
-//         event_tx.send((frame.clone(), ts))?;
-//     }
-// }
 
 pub fn jetstream_iter(
     ws_iter: impl Iterator<Item = std::io::Result<Frame>>,
@@ -127,6 +86,7 @@ pub fn copy_frames_to_file(
     mut file: File,
     file_len: Arc<AtomicU64>,
     iter: impl IntoIterator<Item = (Frame, Timestamp)>,
+    thread: std::thread::Thread,
 ) -> Result<()> {
     let _g = info_span!("upstream copier thread").entered();
     info!("Copying data from upstream");
@@ -134,6 +94,7 @@ pub fn copy_frames_to_file(
     let mut print_stats = crate::upstream::mk_stat_printer();
     for (frame, ts) in iter {
         file.write_all(&frame.bytes)?;
+        thread.unpark();
         // file.flush()?;
         let n = frame.bytes.len() as u64;
         trace!("Wrote {n} bytes");
