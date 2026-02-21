@@ -10,13 +10,11 @@ use std::sync::{LazyLock, Mutex};
 use tracing::*;
 use tracing_subscriber::{EnvFilter, prelude::*};
 use wsclient::OpCode;
-// use wsserver::ClientConfig;
 
 static DATA: LazyLock<Mutex<Vec<u8>>> = LazyLock::new(|| Mutex::new(Vec::with_capacity(MAX_DATA)));
 const MAX_DATA: usize = 1024 * 1024 * 1024;
 
 const MAX_FILES: u32 = 100_000;
-// const LISTENER: io_uring::types::Fixed = io_uring::types::Fixed(MAX_FILES - 1);
 
 fn main() -> Result<()> {
     let filter = EnvFilter::builder()
@@ -36,14 +34,6 @@ fn main() -> Result<()> {
         .build(8192)
         .context("Build ring")?;
     uring.submitter().register_files_sparse(MAX_FILES)?;
-    // uring.submitter().register_buffers_sparse(1)?;
-    // unsafe {
-    //     let data = DATA.lock().unwrap();
-    //     let iovec = IoSlice::new(&data);
-    //     uring
-    //         .submitter()
-    //         .register_buffers(&[std::mem::transmute(iovec)])?;
-    // }
     info!(fd = uring.as_raw_fd(), "Set up the uring");
 
     // Bind the listener socket ASAP
@@ -55,17 +45,6 @@ fn main() -> Result<()> {
     let listen_addr = SocketAddr::new([0, 0, 0, 0].into(), port);
     let listener = TcpListener::bind(listen_addr)?;
     info!(%listen_addr, "Bound socket");
-    // uring
-    //     .submitter()
-    //     .register_files_update(LISTENER.0, &[listener.into_raw_fd()])
-    //     .context("Registering listener")?;
-
-    // unsafe {
-    //     let op = io_uring::opcode::AcceptMulti::new(LISTENER)
-    //         .build()
-    //         .user_data(mk_user_data(CODE_ACCEPT, 0));
-    //     uring.submission().push(&op)?;
-    // }
 
     let var = "UPSTREAM_URL";
     let url = match std::env::var(var) {
@@ -95,7 +74,6 @@ fn main() -> Result<()> {
                 let to = data.len() + frame.bytes.len() as usize;
                 assert!(to < MAX_DATA);
                 data.extend_from_slice(&frame.bytes);
-                // trace!("Extended DATA to {} B", to);
             }
             anyhow::Ok(())
         })?;
@@ -129,8 +107,8 @@ fn main() -> Result<()> {
         for client in new_clients_rx.try_iter() {
             let fd = client.conn.as_raw_fd();
             let client_id = clients.insert(client);
-            ensure!(client_id <= MAX_FILES as usize);
-            info!(client_id, "Client registered");
+            ensure!(client_id < MAX_FILES as usize);
+            debug!(client_id, "Client registered");
             uring
                 .submitter()
                 .register_files_update(client_id as u32, &[fd])?;
@@ -179,18 +157,6 @@ struct Client {
     in_flight: bool,
 }
 
-// impl Client {
-//     fn mk_read(&mut self, client_id: ClientId) -> squeue::Entry {
-//         let buf = self.buffer.as_mut().unwrap();
-//         opcode::Read::new(
-//             io_uring::types::Fixed(client_id),
-//             buf.0[buf.1..].as_mut_ptr(),
-//             (buf.0.len() - buf.1) as u32,
-//         )
-//         .build()
-//     }
-// }
-
 impl Drop for Client {
     fn drop(&mut self) {
         trace!("Sending close frame to client");
@@ -214,14 +180,13 @@ fn get_client_caught_up(
         let from = client.offset as usize;
         let to = from + n as usize;
         let slice = &DATA.lock().unwrap()[client.offset as usize..];
-        // let op = opcode::Send::new(client.conn, slice.as_ptr(), slice.len() as u32)
         let op = opcode::SendZc::new(
             io_uring::types::Fixed(client_id),
             slice.as_ptr(),
             slice.len() as u32,
         )
         .build()
-        .user_data(mk_user_data(CODE_SEND_DATA, client_id));
+        .user_data(client_id as u64);
         sqes.push(op);
         client.in_flight = true;
         debug!(
@@ -233,61 +198,24 @@ fn get_client_caught_up(
     Ok(())
 }
 
-// fn kill_client(sqes: &mut Vec<squeue::Entry>, clients: &Slab<Client>, client_id: u32) {
-//     static FOO: [i32; 1] = [-1];
-//     static CLOSE_FRAME: [u8; 4] = [0x88, 0x02, 0x03, 0xE8];
-//     let client = &clients[client_id as usize];
-//     sqes.extend([
-//         opcode::Write::new(client.conn, CLOSE_FRAME.as_ptr(), CLOSE_FRAME.len() as u32)
-//             .build()
-//             .flags(Flags::IO_HARDLINK)
-//             .user_data(client_id as u64),
-//         opcode::Close::new(client.conn)
-//             .build()
-//             .flags(Flags::IO_HARDLINK)
-//             .user_data(client_id as u64),
-//         opcode::FilesUpdate::new(FOO.as_ptr(), 1)
-//             .offset(client.conn.0 as i32)
-//             .build()
-//             .user_data(mk_user_data(CODE_REMOVE_FD, client_id)),
-//     ])
-// }
-
-// const CODE_ACCEPT: u32 = 1;
-const CODE_SEND_DATA: u32 = 5;
-
-fn mk_user_data(code: u32, client_id: u32) -> u64 {
-    (code as u64) << 32 | client_id as u64
-}
-
 fn handle_completion(cqe: cqueue::Entry, clients: &mut Slab<Client>) -> Result<()> {
-    let code = (cqe.user_data() >> 32) as u32;
     let client_id = cqe.user_data() as u32;
-    match code {
-        CODE_SEND_DATA => {
-            let result = cqe.result();
-            match result {
-                _ if cqueue::notif(cqe.flags()) => {
-                    assert_eq!(result?, 0);
-                    debug!(client_id, "Notification");
-                }
-                Ok(n) => {
-                    let client = &mut clients[client_id as usize];
-                    client.offset += n as u64;
-                    client.in_flight = false;
-                    debug!(client_id, offset = client.offset, "Sent {n} bytes");
-                }
-                Err(e) => {
-                    error!(client_id, "Send: {e:#}");
-                    clients.remove(client_id as usize);
-                }
-            }
+    let result = cqe.result();
+    match result {
+        _ if cqueue::notif(cqe.flags()) => {
+            assert_eq!(result?, 0);
+            debug!(client_id, "Notification");
         }
-        0 => match cqe.result() {
-            Ok(n) => info!(client_id, "Some kind of I/O completed: {n}"),
-            Err(e) => warn!(client_id, "Some kind of I/O completed: {e:#}"),
-        },
-        _ => panic!("{}", code),
+        Ok(n) => {
+            let client = &mut clients[client_id as usize];
+            client.offset += n as u64;
+            client.in_flight = false;
+            debug!(client_id, offset = client.offset, "Sent {n} bytes");
+        }
+        Err(e) => {
+            error!(client_id, "Send: {e:#}");
+            clients.remove(client_id as usize);
+        }
     }
     Ok(())
 }
