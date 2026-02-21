@@ -5,6 +5,7 @@
 
 = Bluesky
 
+/*
 == Bluesky
 
 Twitter clone, all data publically available
@@ -124,6 +125,18 @@ $ websocat wss://jetstream2.us-west.bsky.network/subscribe
 ```
 ]]
 
+*/
+
+
+== The firehose
+
+#v(1fr)
+#align(center)[
+`wss://jetstream2.us-west.bsky.network/subscribe`
+]
+#v(2fr)
+
+/*
 // Very small, but I think you can just abount make out that it's
 // JSON objects, separated by some non-ASCII stuff
 
@@ -158,6 +171,20 @@ $ websocat wss://jetstream2.us-west.bsky.network/subscribe
 ]
 ]
 
+== How much data?
+
+\~400 events/second
+
+Typical event: \~0.5 KiB
+
+Bitrate: \~1.6 Mbps // (200 KiB/s)
+
+16.5 GiB/day
+
+#speaker-note[
+Our challenge is to feed this to as many simultenous clients as possible
+]
+
 // These bytes at the start are the websocket frame header.
 // Basically it encodes the length of the frame as a varint.
 
@@ -189,6 +216,7 @@ Remember the last timestamp you saw \
 ⇒  you can resume from where you were
 
 #underline[Essential functionality]
+*/
 
 == Repeaters
 
@@ -251,42 +279,6 @@ Some of these repeaters transform the data too, eg.
 the "jetstream" format I mentioned.  Ours is just
 going to re-transmit the event data verbatim;
 adding transformations is easy if needed however.
-]
-
-== How much data?
-
-\~400 events/second
-
-Typical event: \~0.5 KiB
-
-Bitrate: \~1.6 Mbps // (200 KiB/s)
-
-16.5 GiB/day
-
-#speaker-note[
-Our challenge is to feed this to as many simultenous clients as possible
-]
-
-== Theoretical limits
-
-#speaker-note[
-The hard upper bound is given by the network interface...
-
-Your machine probably has a 1-gigabit network card.  That can do 600 clients
-If you buy a server it will probably come with a 10-gig card.
-Amazon will rent you a machine with a 100- or even 200-gig NIC!
-
-]
-
-1Gbps NIC => \~600 simulteneous clients
-
-10Gbps NIC => \~6000 simulteneous clients
-
-100Gbps NIC => \~60k simulteneous clients!
-
-#speaker-note[
-...but what about the software?
-can we write a program which can support 10s of thousands of clients?
 ]
 
 // ---

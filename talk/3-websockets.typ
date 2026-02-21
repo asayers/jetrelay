@@ -89,6 +89,7 @@ Sec-WebSocket-Accept: UzQo2NzMDEyM1NggMTIzND5=
 ```
 ]
 
+/*
 #slide[
 
 // ```
@@ -169,4 +170,4 @@ but eventually everyone sees the same bytes as everyone else.
 //   #image("sendfile.svg")
 // ]
 
-
+*/

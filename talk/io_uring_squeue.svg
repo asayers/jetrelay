@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="141.40556mm"
+   height="10.543001mm"
+   viewBox="0 0 141.40556 10.543001"
+   version="1.1"
+   id="svg1"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <marker
+       style="overflow:visible"
+       id="Triangle"
+       refX="0"
+       refY="0"
+       orient="0"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135"
+         transform="scale(0.5)" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Triangle-8"
+       refX="0"
+       refY="0"
+       orient="0"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:0.5pt"
+         d="m -1.1072586,0 4.325,2.5 v -5 z"
+         id="path135-7" />
+    </marker>
+  </defs>
+  <g
+     id="layer1"
+     transform="translate(-49.48008,-38.646089)">
+    <text
+       xml:space="preserve"
+       style="font-size:5.29167px;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#5c00d2;fill-opacity:1;stroke:none;stroke-width:0.600001"
+       x="78.977127"
+       y="43.271011"
+       id="text1-5"><tspan
+         id="tspan1-09"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.29167px;font-family:Iosevka;-inkscape-font-specification:Iosevka;fill:#5c00d2;fill-opacity:1;stroke:none;stroke-width:0.6"
+         x="78.977127"
+         y="43.271011">write(<tspan
+   style="font-style:italic;fill:#5c00d2;fill-opacity:1"
+   id="tspan4-6">$x</tspan>)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:5.29167px;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#5c00d2;fill-opacity:1;stroke:none;stroke-width:0.600001"
+       x="113.32828"
+       y="43.106968"
+       id="text1-3-3"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.29167px;font-family:Iosevka;-inkscape-font-specification:Iosevka;fill:#5c00d2;fill-opacity:1;stroke:none;stroke-width:0.6"
+         x="113.32828"
+         y="43.106968"
+         id="tspan3-8">write(<tspan
+   style="font-style:italic;fill:#5c00d2;fill-opacity:1"
+   id="tspan5-5">$y</tspan>)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:5.29167px;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#5c00d2;fill-opacity:1;stroke:none;stroke-width:0.600001"
+       x="147.67943"
+       y="43.271011"
+       id="text1-7-6"><tspan
+         id="tspan1-0-1"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.29167px;font-family:Iosevka;-inkscape-font-specification:Iosevka;fill:#5c00d2;fill-opacity:1;stroke:none;stroke-width:0.6"
+         x="147.67943"
+         y="43.271011">write(<tspan
+   style="font-style:italic;fill:#5c00d2;fill-opacity:1"
+   id="tspan6-1">$z</tspan>)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.93889px;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#0d6600;fill-opacity:1;stroke:none;stroke-width:0.600001"
+       x="82.508186"
+       y="65.406631"
+       id="text1-2-9"><tspan
+         id="tspan1-5-8"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:Iosevka;-inkscape-font-specification:Iosevka;fill:#0d6600;fill-opacity:1;stroke:none;stroke-width:0.6"
+         x="82.508186"
+         y="65.406631">Ok(…)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.93889px;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#920000;fill-opacity:1;stroke:none;stroke-width:0.600001"
+       x="118.61815"
+       y="65.406631"
+       id="text1-3-7-4"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:Iosevka;-inkscape-font-specification:Iosevka;fill:#920000;fill-opacity:1;stroke:none;stroke-width:0.6"
+         x="118.61815"
+         y="65.406631"
+         id="tspan3-44-8">Err(…)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.93889px;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#0d6600;fill-opacity:1;stroke:none;stroke-width:0.600001"
+       x="157.27658"
+       y="65.406631"
+       id="text1-7-0-1"><tspan
+         id="tspan1-0-7-0"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:Iosevka;-inkscape-font-specification:Iosevka;fill:#0d6600;fill-opacity:1;stroke:none;stroke-width:0.6"
+         x="157.27658"
+         y="65.406631">Ok(…)</tspan></text>
+    <g
+       id="g1"
+       transform="translate(1.0064564)">
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.9389px;font-family:Andika;-inkscape-font-specification:Andika;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#5c00d2;fill-opacity:1;stroke:none;stroke-width:0.600001"
+         x="176.26756"
+         y="48.60136"
+         id="text7-3"><tspan
+           id="tspan7-0"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Excalifont;-inkscape-font-specification:Excalifont;fill:#906d00;fill-opacity:1;stroke-width:0.6"
+           x="176.26756"
+           y="48.60136">Kernel</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.9389px;font-family:Andika;-inkscape-font-specification:Andika;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#5c00d2;fill-opacity:1;stroke:none;stroke-width:0.600001"
+         x="48.246437"
+         y="47.346882"
+         id="text7-1-4"><tspan
+           id="tspan7-4-4"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Excalifont;-inkscape-font-specification:Excalifont;fill:#906d00;fill-opacity:1;stroke-width:0.6"
+           x="48.246437"
+           y="47.346882">Userspace</tspan></text>
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.600001;marker-end:url(#Triangle)"
+         d="m 75.08106,46.744334 c 32.45496,0.118063 64.90838,0.197289 97.36241,-1e-6"
+         id="path1" />
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.9389px;font-family:Andika;-inkscape-font-specification:Andika;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#5c00d2;fill-opacity:1;stroke:none;stroke-width:0.600001"
+       x="177.27402"
+       y="69.674446"
+       id="text7-3-2"><tspan
+         id="tspan7-0-3"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Excalifont;-inkscape-font-specification:Excalifont;fill:#906d00;fill-opacity:1;stroke-width:0.6"
+         x="177.27402"
+         y="69.674446">Kernel</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.9389px;font-family:Andika;-inkscape-font-specification:Andika;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#5c00d2;fill-opacity:1;stroke:none;stroke-width:0.600001"
+       x="49.252895"
+       y="68.419968"
+       id="text7-1-4-7"><tspan
+         id="tspan7-4-4-5"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Excalifont;-inkscape-font-specification:Excalifont;fill:#906d00;fill-opacity:1;stroke-width:0.6"
+         x="49.252895"
+         y="68.419968">Userspace</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.600001;marker-end:url(#Triangle-8)"
+       d="m 173.99198,67.817418 c -32.45497,0.118063 -64.90839,0.197289 -97.362408,-10e-7"
+       id="path1-9" />
+  </g>
+</svg>

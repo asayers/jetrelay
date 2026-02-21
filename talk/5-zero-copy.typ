@@ -6,10 +6,11 @@
 
 = Zero-copy
 
+
 == `write()`ing to a TCP socket
 
 - Copy bytes from userspace buffer to socket's `sk_write_queue`
-- May return once the bytes are safely appended to queue
+- Returns once the bytes are safely appended to queue
   - May take the chance to do some socket work
     - Which might include actually sending those bytes
 - Bytes in the queue will be sent, possibly multiple times
@@ -18,24 +19,24 @@
 
 == Fragments
 
-#quote(block: true, attribution: [`mm/page_frag_cache.c`])[
-An arbitrary-length arbitrary-offset area of memory which resides within a
-0 or higher order page.  Multiple fragments within that page are
-individually refcounted, in the page's reference counter.
-]
+// #quote(block: true, attribution: [`mm/page_frag_cache.c`])[
+// An arbitrary-length arbitrary-offset area of memory which resides within a
+// 0 or higher order page.  Multiple fragments within that page are
+// individually refcounted, in the page's reference counter.
+// ]
 
 ```c
 struct page_frag {
-    struct page *page;
+    struct page *page; // backing allocation, refcounted
     __u16 offset;
     __u16 size;
 };
 ```
 
-If you're ever used the "bytes" crate this may look familiar
+// If you're ever used the "bytes" crate this may look familiar
 
-#small[There's also an optimization which allows very small fragments to be
-inlined into the skb]
+// #small[There's also an optimization which allows very small fragments to be
+// inlined into the skb]
 
 == `write()`
 
@@ -66,7 +67,9 @@ inlined into the skb]
 
 == What we want is...
 
-...a kernel-owned buffer
+A buffer
+
+...owned by the kernel
 
 ...that will survive across multiple `write()`s
 
@@ -181,7 +184,7 @@ Same as creating a file in /tmp \
 == memfd
 
 ```rust
-let file = memfd_create("my_special_data", MemfdFlags::empty())?;
+let file = memfd_create("my_special_data", MemfdFlags::CLOEXEC)?;
 ```
 
 #pause
@@ -243,9 +246,11 @@ Take a slice of `file` and push it onto `sock`'s send queue
 #grid(columns:2, gutter: 1em,
 [
 ```rust
-static MEMFD: File = memfd_create("bsky.dat")?;
-let (mut upstream, _) = connect_async("...").await?;
 let sock = TcpListener::bind("0.0.0.0:80").await?;
+let (mut upstream, _) = connect_async("...").await?;
+static DATA: LazyLock<File> = LazyLock::new(||
+    memfd_create("bsky.dat"), MemfdFlags::CLOEXEC,
+);
 static NOTIFY: Notify = Notify::const_new();
 ```
 
@@ -253,7 +258,8 @@ static NOTIFY: Notify = Notify::const_new();
 ```rust
 loop {
     let msg = upstream.next().await?;
-    (&*MEMFD).write_all(&frame)?;
+    let msg = add_ws_framing(msg);
+    DATA.write_all(&msg)?;
     NOTIFY.notify_waiters();
 }
 ```
@@ -263,14 +269,15 @@ titled-block(title: [`task`])[
 loop {
     let (conn, _) = sock.accept().await?;
     tokio::spawn(async move {
-        let ws = accept_async(conn).await?;
-        let mut conn = ws.into_inner();
-        let mut offset = 0;
+        accept_async(&conn).await?;
+        let mut offset = DATA.metadata()?.len();
         loop {
             NOTIFY.notified().await;
             conn.writable().await?;
-            sendfile(&conn, &*MEMFD,
-                     Some(&mut offset), n)?;
+            rustix::fs::sendfile(
+                &conn, &*DATA,
+                Some(&mut offset), n
+            )?;
         }
     });
 }
@@ -282,17 +289,25 @@ loop {
                 // Err(_) => break,
 ]
 
+== Caveats
+
+- Portability
+- Memory locked in page cache
+- Can modify in-flight data
+
 == How does it do?
 
-#table(columns:3, inset: 0.5em,
-table.header([*Implementation*], [*Throughput*], [*Clients*]),
-[Non-blocking I/O], [10 Gbps], [6.5k],
-[\+ batching], [56 Gbps], [35k],
-[\+ zero-copy], [80 Gbps], [50k],
-[???], [??? Gbps], [???],
-)
-
-#small[(single core, loopback interface)]
+#let unknown = text(gray)[???]
+#align(center,
+table(columns:3, inset: 0.4em, stroke:none,
+table.header([*Impl*], [*Clients*], [*Throughput*]),
+table.hline(),
+[\#1], [2.7k], [4 Gbps],
+[\#2], [31k], [52 Gbps],
+[\#3], [48k], [80 Gbps], // 30k => <1s
+[\#4], unknown, unknown,
+))
+#small[(restricted to one CPU)]
 
 #speaker-note[
 By the way, we could have just used a regular file instead of a memfd.
@@ -316,6 +331,7 @@ and the NIC will deference them, and read bytes directly out of RAM and onto the
 So it really is zero copy!
 ]
 
+/*
 == Ownership
 
 #align(center, image("ownership.svg", width: 70%))
@@ -332,4 +348,4 @@ So it really is zero copy!
 [`mmap(file)`     ],[ ✅ ],[  ✅  ],[ ✅ #small[(memory owned by page cache, has inode etc.)] ],
 [`memfd_create()` ],[ ❌ ],[ ❌   ],[ ✅ #small[(memory owned by page cache, has inode etc.)] ],
 )
-
+*/

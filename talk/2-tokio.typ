@@ -1,7 +1,7 @@
 #import "@preview/touying:0.6.1": *
 #import "util.typ": *
 
-= Tokio + Tunstenite
+= Tokio + Tungstenite
 
 == Shopping for components
 
@@ -10,8 +10,11 @@
     - `accept_async()` - handshake w/ client
     - You get a `Stream<Message>`
 
-- tokio's `broadcast::channel()`
-    - Each sent value is seen by all consumers
+#pause
+
+- `broadcast::channel()` (from tokio)
+    - Send values
+    - seen by all consumers
 
 == Implementation \#1
 
@@ -22,9 +25,9 @@
 // #set page(columns:2)
 
 ```rust
-let (tx, rx) = channel::<Message>(1024);
-let (mut upstream, _) = connect_async("wss://jetstream...").await?;
 let sock = TcpListener::bind("0.0.0.0:80").await?;
+let (mut upstream, _) = connect_async("wss://jetstream...").await?;
+let (tx, rx) = broadcast::channel::<Message>(1024);
 ```
 
 #grid(columns:2, gutter: 1em,
@@ -87,6 +90,11 @@ Customise to support cursor=...
 
 == How does it do?
 
+#speaker-note[
+I'm going to connect more and more clients to it until it can't keep up any more.
+Restricted to one CPU.
+]
+
 ---
 
 #v(1em)
@@ -112,27 +120,54 @@ systemd-run --user -p LimitNOFILE=100000 -p CPUQuota=100%
 
 ---
 
-// Can manage \~9.8 Gbps
-
-// Starts lagging around 6.5k clients
-
-// Can't _quite_ saturate a 10G NIC
-
-#table(columns:3, inset: 0.5em,
-table.header([*Impl*], [*Throughput*], [*Clients*]),
-[Non-blocking I/O], [10 Gbps], [6.5k],
-[???], [??? Gbps], [???],
-[???], [??? Gbps], [???],
-[???], [??? Gbps], [???],
-)
-
-#small[(single core, loopback interface)]
+#let unknown = text(gray)[???]
+#align(center,
+table(columns:3, inset: 0.4em, stroke:none,
+table.header([*Impl*], [*Clients*], [*Throughput*]),
+table.hline(),
+[\#1], [2.7k], [4 Gbps], // [6.5k], [10 Gbps],
+[\#2], unknown, unknown,
+[\#3], unknown, unknown,
+[\#4], unknown, unknown,
+))
+#small[(restricted to one CPU)]
 
 #speaker-note[
-Notes about benchmarks:
-- Single core
-- loopback interface
+Can manage \~9.8 Gbps
+Starts lagging around 6.5k clients
+Not bad for such straightforward code!
+Off-the shelf components
+If your server has a 10G NIC then you're almost at the physical limit
+...but amazon will happily rent you a machine with a 200G NIC
+They'll do you a machine with a network interface measured in _terrabits_! (if you've got the cash)
+On a 100G machine you should be able to serve 65k simultaneous clients
+...if the software can keep up
+so can we do better?  (The ??? boxes are a give-away)
 ]
+
+// == Theoretical limits
+
+// #speaker-note[
+// The hard upper bound is given by the network interface...
+
+// Your machine probably has a 1-gigabit network card.  That can do 600 clients
+// If you buy a server it will probably come with a 10-gig card.
+// Amazon will rent you a machine with a 100- or even 200-gig NIC!
+
+// ]
+
+// 1Gbps NIC => \~600 simulteneous clients
+
+// 10Gbps NIC => \~6000 simulteneous clients
+
+// 100Gbps NIC => \~60k simulteneous clients!
+
+// #speaker-note[
+// ...but what about the software?
+// can we write a program which can support 10s of thousands of clients?
+// ]
+
+
 
 
 

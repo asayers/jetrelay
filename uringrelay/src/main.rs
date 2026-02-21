@@ -36,7 +36,7 @@ fn main() -> Result<()> {
         .setup_defer_taskrun()
         .build(8192)
         .context("Build ring")?;
-    uring.submitter().register_files_sparse(100_000)?;
+    uring.submitter().register_files_sparse(MAX_FILES)?;
     // uring.submitter().register_buffers_sparse(1)?;
     // unsafe {
     //     let data = DATA.lock().unwrap();

@@ -14,13 +14,54 @@ Transform to a vec of bytes
 == Implementation \#2
 
 #text(17pt)[
-
 #grid(columns:2, gutter: 1em,
 [
 ```rust
-let bytes: Vec<u8> = Vec::with_capacity(1 << 30);
-let (mut upstream, _) = connect_async("...").await?;
 let sock = TcpListener::bind("0.0.0.0:80").await?;
+let (mut upstream, _) = connect_async("...").await?;
+static DATA: Mutex<Vec<u8>> = Mutex::new(Vec::new());
+ 
+```
+
+#titled-block(title: [`task`])[
+```rust
+loop {
+    let msg = upstream.next().await?;
+    let msg = add_ws_framing(msg);
+    DATA.lock().extend(&msg)?;
+
+}
+```
+]],
+titled-block(title: [`task`])[
+```rust
+loop {
+    let (conn, _) = sock.accept().await?;
+    tokio::spawn(async move {
+        let ws = accept_async(conn).await?;
+        let mut conn = ws.into_inner();
+        let mut offset = DATA.lock().len();
+        loop {
+
+            let data = DATA.lock();
+            let new_data = &data[offset..];
+            let n = conn.write(new_data).await?;
+            offset += n;
+        }
+    });
+}
+```
+])]
+
+---
+
+#text(17pt)[
+#grid(columns:2, gutter: 1em,
+[
+```rust
+let sock = TcpListener::bind("0.0.0.0:80").await?;
+let (mut upstream, _) = connect_async("...").await?;
+static DATA: Mutex<Vec<u8>> = Mutex::new(Vec::new());
 static NOTIFY: Notify = Notify::const_new();
 ```
 
@@ -28,8 +69,8 @@ static NOTIFY: Notify = Notify::const_new();
 ```rust
 loop {
     let msg = upstream.next().await?;
-    bytes.extend(ws_header(&msg))?;
-    bytes.extend(&msg)?;
+    let msg = add_ws_framing(msg);
+    DATA.lock().extend(&msg)?;
     NOTIFY.notify_waiters();
 }
 ```
@@ -41,24 +82,24 @@ loop {
     tokio::spawn(async move {
         let ws = accept_async(conn).await?;
         let mut conn = ws.into_inner();
-        let mut offset = 0;
+        let mut offset = DATA.lock().len();
         loop {
             NOTIFY.notified().await;
-            let xs = &bytes[offset..];
-            let n = conn.write(xs).await?;
+            let data = DATA.lock();
+            let new_data = &data[offset..];
+            let n = conn.write(new_data).await?;
             offset += n;
         }
     });
 }
 ```
-])
+])]
 
-            // match conn.write(&bytes[offset..]).await {
+            // match conn.write(&data[offset..]).await {
             //     Ok(n) =>  offset += n,
             //     Err(e) if e.kind() == ErrorKind::WouldBlock => (), // loop
             //     Err(e) => break,
             // }
-]
 
 // // We write the data to the file
 // // _exactly_ as it'll appear on the wire
@@ -100,15 +141,17 @@ sysctl -w net.ipv4.ip_local_port_range="1024 65535"
 
 ---
 
-#table(columns:3, inset: 0.5em,
-table.header([*Implementation*], [*Throughput*], [*Clients*]),
-[Non-blocking I/O], [10 Gbps], [6.5k],
-[\+ batching], [56 Gbps], [35k],
-[???], [??? Gbps], [???],
-[???], [??? Gbps], [???],
-)
-
-#small[(single core, loopback interface)]
+#let unknown = text(gray)[???]
+#align(center,
+table(columns:3, inset: 0.4em, stroke:none,
+table.header([*Impl*], [*Clients*], [*Throughput*]),
+table.hline(),
+[\#1], [2.7k], [4 Gbps],
+[\#2], [31k], [52 Gbps],  // 31k => 3.5s, 25k => 2s, 13k => 1s
+[\#3], unknown, unknown,
+[\#4], unknown, unknown,
+))
+#small[(restricted to one CPU)]
 
 #speaker-note[
 One thing to note:
