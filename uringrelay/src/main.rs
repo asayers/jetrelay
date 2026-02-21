@@ -6,7 +6,6 @@ use rustix::fd::AsRawFd;
 use slab::Slab;
 use std::io::Write;
 use std::net::{SocketAddr, TcpListener, TcpStream};
-use std::os::fd::{FromRawFd, IntoRawFd, RawFd};
 use std::sync::{LazyLock, Mutex};
 use tracing::*;
 use tracing_subscriber::{EnvFilter, prelude::*};
@@ -17,7 +16,7 @@ static DATA: LazyLock<Mutex<Vec<u8>>> = LazyLock::new(|| Mutex::new(Vec::with_ca
 const MAX_DATA: usize = 1024 * 1024 * 1024;
 
 const MAX_FILES: u32 = 100_000;
-const LISTENER: io_uring::types::Fixed = io_uring::types::Fixed(MAX_FILES - 1);
+// const LISTENER: io_uring::types::Fixed = io_uring::types::Fixed(MAX_FILES - 1);
 
 fn main() -> Result<()> {
     let filter = EnvFilter::builder()
@@ -56,19 +55,17 @@ fn main() -> Result<()> {
     let listen_addr = SocketAddr::new([0, 0, 0, 0].into(), port);
     let listener = TcpListener::bind(listen_addr)?;
     info!(%listen_addr, "Bound socket");
-    uring
-        .submitter()
-        .register_files_update(LISTENER.0, &[listener.into_raw_fd()])
-        .context("Registering listener")?;
+    // uring
+    //     .submitter()
+    //     .register_files_update(LISTENER.0, &[listener.into_raw_fd()])
+    //     .context("Registering listener")?;
 
-    unsafe {
-        let op = io_uring::opcode::AcceptMulti::new(LISTENER)
-            .build()
-            .user_data(mk_user_data(CODE_ACCEPT, 0));
-        uring.submission().push(&op)?;
-    }
-
-    let mut clients = Slab::<Client>::default();
+    // unsafe {
+    //     let op = io_uring::opcode::AcceptMulti::new(LISTENER)
+    //         .build()
+    //         .user_data(mk_user_data(CODE_ACCEPT, 0));
+    //     uring.submission().push(&op)?;
+    // }
 
     let var = "UPSTREAM_URL";
     let url = match std::env::var(var) {
@@ -103,18 +100,40 @@ fn main() -> Result<()> {
             anyhow::Ok(())
         })?;
 
+    let (new_clients_tx, new_clients_rx) = std::sync::mpsc::channel();
+
+    std::thread::spawn(move || -> anyhow::Result<()> {
+        loop {
+            let (mut conn, addr) = listener.accept()?;
+            debug!(%addr, "New client connected");
+            let _config = wsserver::perform_handshake(&mut conn)?;
+            let client = Client {
+                conn,
+                offset: DATA.lock().unwrap().len() as u64,
+                in_flight: false,
+            };
+            new_clients_tx.send(client)?;
+        }
+    });
+
     let mut sqes = Vec::new();
-    let mut new_clients = Vec::new();
+    let mut clients = Slab::<Client>::default();
 
     info!("Starting runloop");
     loop {
         let mut n_completed = 0;
         for cqe in uring.completion() {
-            handle_completion(&mut clients, cqe, &mut new_clients).context("handle_completion")?;
+            handle_completion(cqe, &mut clients).context("handle_completion")?;
             n_completed += 1;
         }
-        for (client_id, fd) in new_clients.drain(..) {
-            uring.submitter().register_files_update(client_id, &[fd])?;
+        for client in new_clients_rx.try_iter() {
+            let fd = client.conn.as_raw_fd();
+            let client_id = clients.insert(client);
+            ensure!(client_id <= MAX_FILES as usize);
+            info!(client_id, "Client registered");
+            uring
+                .submitter()
+                .register_files_update(client_id as u32, &[fd])?;
         }
         let data_len = DATA.lock().unwrap().len();
         let n_pages = (data_len / 4096) as u32;
@@ -234,43 +253,17 @@ fn get_client_caught_up(
 //     ])
 // }
 
-const CODE_ACCEPT: u32 = 1;
+// const CODE_ACCEPT: u32 = 1;
 const CODE_SEND_DATA: u32 = 5;
 
 fn mk_user_data(code: u32, client_id: u32) -> u64 {
     (code as u64) << 32 | client_id as u64
 }
 
-fn handle_completion(
-    clients: &mut Slab<Client>,
-    cqe: cqueue::Entry,
-    new_clients: &mut Vec<(ClientId, RawFd)>,
-) -> Result<()> {
+fn handle_completion(cqe: cqueue::Entry, clients: &mut Slab<Client>) -> Result<()> {
     let code = (cqe.user_data() >> 32) as u32;
     let client_id = cqe.user_data() as u32;
     match code {
-        CODE_ACCEPT => {
-            assert!(cqueue::more(cqueue::Entry::flags(&cqe)));
-            let fd = cqe.result()? as i32;
-            let mut conn = unsafe { TcpStream::from_raw_fd(fd) };
-            let peer_addr = conn.peer_addr()?;
-            let local_addr = conn.local_addr()?;
-            debug!(
-                %peer_addr,
-                %local_addr,
-                "New client connected",
-            );
-            let _config = wsserver::perform_handshake(&mut conn)?;
-            let client = Client {
-                conn,
-                offset: DATA.lock().unwrap().len() as u64,
-                in_flight: false,
-            };
-            let client_id = clients.insert(client);
-            ensure!(client_id <= MAX_FILES as usize);
-            info!(client_id, "Client registered");
-            new_clients.push((client_id as u32, fd));
-        }
         CODE_SEND_DATA => {
             let result = cqe.result();
             match result {
