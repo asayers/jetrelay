@@ -1,12 +1,12 @@
 use anyhow::{Context, Result, bail, ensure};
-use io_uring::squeue::Flags;
 use io_uring::types::Timespec;
 use io_uring::{IoUring, opcode};
 use io_uring::{cqueue, squeue};
 use rustix::fd::AsRawFd;
 use slab::Slab;
-use std::net::{SocketAddr, TcpListener};
-use std::os::fd::IntoRawFd;
+use std::io::Write;
+use std::net::{SocketAddr, TcpListener, TcpStream};
+use std::os::fd::{FromRawFd, IntoRawFd, RawFd};
 use std::sync::{LazyLock, Mutex};
 use tracing::*;
 use tracing_subscriber::{EnvFilter, prelude::*};
@@ -63,7 +63,6 @@ fn main() -> Result<()> {
 
     unsafe {
         let op = io_uring::opcode::AcceptMulti::new(LISTENER)
-            .allocate_file_index(true)
             .build()
             .user_data(mk_user_data(CODE_ACCEPT, 0));
         uring.submission().push(&op)?;
@@ -105,13 +104,17 @@ fn main() -> Result<()> {
         })?;
 
     let mut sqes = Vec::new();
+    let mut new_clients = Vec::new();
 
     info!("Starting runloop");
     loop {
         let mut n_completed = 0;
         for cqe in uring.completion() {
-            handle_completion(&mut clients, cqe, &mut sqes).context("handle_completion")?;
+            handle_completion(&mut clients, cqe, &mut new_clients).context("handle_completion")?;
             n_completed += 1;
+        }
+        for (client_id, fd) in new_clients.drain(..) {
+            uring.submitter().register_files_update(client_id, &[fd])?;
         }
         let data_len = DATA.lock().unwrap().len();
         let n_pages = (data_len / 4096) as u32;
@@ -152,33 +155,32 @@ type ClientId = u32;
 
 #[derive(Debug)]
 struct Client {
-    conn: io_uring::types::Fixed,
+    conn: TcpStream,
     offset: u64,
     in_flight: bool,
-    buffer: Option<(Box<[u8]>, usize)>,
 }
 
-impl Client {
-    fn mk_read(&mut self) -> squeue::Entry {
-        let buf = self.buffer.as_mut().unwrap();
-        opcode::Read::new(
-            self.conn,
-            buf.0[buf.1..].as_mut_ptr(),
-            (buf.0.len() - buf.1) as u32,
-        )
-        .build()
-    }
-}
-
-// impl Drop for Client {
-//     fn drop(&mut self) {
-//         trace!("Sending close frame to client");
-//         let close_frame = [0x88, 0x02, 0x03, 0xE8];
-//         let _ = self.conn.write_all(&close_frame);
-//         let _ = self.conn.flush();
-//         let _ = self.conn.shutdown(std::net::Shutdown::Both);
+// impl Client {
+//     fn mk_read(&mut self, client_id: ClientId) -> squeue::Entry {
+//         let buf = self.buffer.as_mut().unwrap();
+//         opcode::Read::new(
+//             io_uring::types::Fixed(client_id),
+//             buf.0[buf.1..].as_mut_ptr(),
+//             (buf.0.len() - buf.1) as u32,
+//         )
+//         .build()
 //     }
 // }
+
+impl Drop for Client {
+    fn drop(&mut self) {
+        trace!("Sending close frame to client");
+        let close_frame = [0x88, 0x02, 0x03, 0xE8];
+        let _ = self.conn.write_all(&close_frame);
+        let _ = self.conn.flush();
+        let _ = self.conn.shutdown(std::net::Shutdown::Both);
+    }
+}
 
 fn get_client_caught_up(
     sqes: &mut Vec<squeue::Entry>,
@@ -187,16 +189,20 @@ fn get_client_caught_up(
     client: &mut Client,
 ) -> Result<()> {
     let last_page = (client.offset / 4096) as u32;
-    if !client.in_flight && last_page < n_pages && client.buffer.is_none() {
+    if !client.in_flight && last_page < n_pages {
         let new_pages = n_pages - last_page;
         let n = new_pages * 4096;
         let from = client.offset as usize;
         let to = from + n as usize;
         let slice = &DATA.lock().unwrap()[client.offset as usize..];
         // let op = opcode::Send::new(client.conn, slice.as_ptr(), slice.len() as u32)
-        let op = opcode::SendZc::new(client.conn, slice.as_ptr(), slice.len() as u32)
-            .build()
-            .user_data(mk_user_data(CODE_SEND_DATA, client_id));
+        let op = opcode::SendZc::new(
+            io_uring::types::Fixed(client_id),
+            slice.as_ptr(),
+            slice.len() as u32,
+        )
+        .build()
+        .user_data(mk_user_data(CODE_SEND_DATA, client_id));
         sqes.push(op);
         client.in_flight = true;
         debug!(
@@ -208,30 +214,27 @@ fn get_client_caught_up(
     Ok(())
 }
 
-fn kill_client(sqes: &mut Vec<squeue::Entry>, clients: &Slab<Client>, client_id: u32) {
-    static FOO: [i32; 1] = [-1];
-    static CLOSE_FRAME: [u8; 4] = [0x88, 0x02, 0x03, 0xE8];
-    let client = &clients[client_id as usize];
-    sqes.extend([
-        opcode::Write::new(client.conn, CLOSE_FRAME.as_ptr(), CLOSE_FRAME.len() as u32)
-            .build()
-            .flags(Flags::IO_HARDLINK)
-            .user_data(client_id as u64),
-        opcode::Close::new(client.conn)
-            .build()
-            .flags(Flags::IO_HARDLINK)
-            .user_data(client_id as u64),
-        opcode::FilesUpdate::new(FOO.as_ptr(), 1)
-            .offset(client.conn.0 as i32)
-            .build()
-            .user_data(mk_user_data(CODE_REMOVE_FD, client_id)),
-    ])
-}
+// fn kill_client(sqes: &mut Vec<squeue::Entry>, clients: &Slab<Client>, client_id: u32) {
+//     static FOO: [i32; 1] = [-1];
+//     static CLOSE_FRAME: [u8; 4] = [0x88, 0x02, 0x03, 0xE8];
+//     let client = &clients[client_id as usize];
+//     sqes.extend([
+//         opcode::Write::new(client.conn, CLOSE_FRAME.as_ptr(), CLOSE_FRAME.len() as u32)
+//             .build()
+//             .flags(Flags::IO_HARDLINK)
+//             .user_data(client_id as u64),
+//         opcode::Close::new(client.conn)
+//             .build()
+//             .flags(Flags::IO_HARDLINK)
+//             .user_data(client_id as u64),
+//         opcode::FilesUpdate::new(FOO.as_ptr(), 1)
+//             .offset(client.conn.0 as i32)
+//             .build()
+//             .user_data(mk_user_data(CODE_REMOVE_FD, client_id)),
+//     ])
+// }
 
 const CODE_ACCEPT: u32 = 1;
-const CODE_READ_HDRS: u32 = 2;
-const CODE_WRITE_HDRS: u32 = 3;
-const CODE_REMOVE_FD: u32 = 4;
 const CODE_SEND_DATA: u32 = 5;
 
 fn mk_user_data(code: u32, client_id: u32) -> u64 {
@@ -241,120 +244,34 @@ fn mk_user_data(code: u32, client_id: u32) -> u64 {
 fn handle_completion(
     clients: &mut Slab<Client>,
     cqe: cqueue::Entry,
-    sqes: &mut Vec<squeue::Entry>,
+    new_clients: &mut Vec<(ClientId, RawFd)>,
 ) -> Result<()> {
     let code = (cqe.user_data() >> 32) as u32;
     let client_id = cqe.user_data() as u32;
     match code {
-        // 1 => {
-        //     assert!(cqueue::more(cqueue::Entry::flags(&cqe)));
-        //     let mut conn = unsafe { TcpStream::from_raw_fd(cqe.result()? as i32) };
-        //     let peer_addr = conn.peer_addr()?;
-        //     let local_addr = conn.local_addr()?;
-        //     debug!(
-        //         %peer_addr,
-        //         %local_addr,
-        //         "New client connected",
-        //     );
-        //     let config = wsserver::perform_handshake(&mut conn)?;
-        //     let client = Client::new(conn, config).try_into()?;
-        //     let client_id = clients.insert(client);
-        //     ensure!(client_id <= u32::MAX as usize);
-        //     info!(client_id, "Client registered");
-        // }
         CODE_ACCEPT => {
-            if !cqueue::more(cqueue::Entry::flags(&cqe)) {
-                warn!("Re-arming accept");
-                sqes.push(
-                    io_uring::opcode::AcceptMulti::new(LISTENER)
-                        .allocate_file_index(true)
-                        .build()
-                        .user_data(mk_user_data(CODE_ACCEPT, 0)),
-                );
-            }
-            let conn = io_uring::types::Fixed(cqe.result()?);
-            // let peer_addr = conn.peer_addr()?;
-            // let local_addr = conn.local_addr()?;
+            assert!(cqueue::more(cqueue::Entry::flags(&cqe)));
+            let fd = cqe.result()? as i32;
+            let mut conn = unsafe { TcpStream::from_raw_fd(fd) };
+            let peer_addr = conn.peer_addr()?;
+            let local_addr = conn.local_addr()?;
             debug!(
-                //     %peer_addr,
-                //     %local_addr,
+                %peer_addr,
+                %local_addr,
                 "New client connected",
             );
-            let client_id = clients.insert(Client {
+            let _config = wsserver::perform_handshake(&mut conn)?;
+            let client = Client {
                 conn,
-                offset: 0,
+                offset: DATA.lock().unwrap().len() as u64,
                 in_flight: false,
-                buffer: Some((Box::new([0; 4096]), 0)),
-            });
-            ensure!(client_id <= u32::MAX as usize);
-            debug!(client_id, conn = conn.0, "Client registered");
-            let client = &mut clients[client_id];
-            sqes.push(
-                client
-                    .mk_read()
-                    .user_data(mk_user_data(CODE_READ_HDRS, client_id as u32)),
-            );
+            };
+            let client_id = clients.insert(client);
+            ensure!(client_id <= MAX_FILES as usize);
+            info!(client_id, "Client registered");
+            new_clients.push((client_id as u32, fd));
         }
-        CODE_READ_HDRS => {
-            let client = &mut clients[client_id as usize];
-            let n = cqe.result()?;
-            let buf = client.buffer.as_mut().unwrap();
-            buf.1 += n as usize;
-            match wsserver::parse_headers(&buf.0[..buf.1]) {
-                Ok(Some((resp, config))) => {
-                    client.offset = match config.cursor {
-                        Some(_) => todo!(),
-                        None => DATA.lock().unwrap().len() as u64,
-                    };
-                    debug!(client_id, "Initial offset: {}", client.offset);
-                    let resp: Box<[u8]> = resp.into_bytes().into();
-                    sqes.push(
-                        opcode::Write::new(client.conn, resp.as_ptr(), resp.len() as u32)
-                            .build()
-                            .user_data(mk_user_data(CODE_WRITE_HDRS, client_id)),
-                    );
-                    client.buffer = Some((resp, 0));
-                }
-                Ok(None) => {
-                    sqes.push(
-                        client
-                            .mk_read()
-                            .user_data(mk_user_data(CODE_READ_HDRS, client_id)),
-                    );
-                }
-                Err(_) => {
-                    kill_client(sqes, clients, client_id);
-                    // let mut client = clients.remove(client_id as usize);
-                    // let conn = &mut client.conn;
-                    // writeln!(conn, "HTTP/1.1 500 {e:#}\r")?;
-                    // writeln!(conn, "\r")?;
-                    // conn.flush()?;
-                    // conn.shutdown(std::net::Shutdown::Both)?;
-                }
-            }
-        }
-        3 => {
-            let client = &mut clients[client_id as usize];
-            match cqe.result() {
-                Ok(n) => {
-                    debug!(
-                        client_id,
-                        "Send {n} bytes of headers.  Client is now ready to recieve data"
-                    );
-                    // info!("Client connected");
-                    client.buffer = None;
-                }
-                Err(e) => {
-                    error!(client_id, "{e:#}");
-                    kill_client(sqes, clients, client_id);
-                }
-            }
-        }
-        4 => {
-            clients.remove(client_id as usize);
-            info!(client_id, "Unregistered client");
-        }
-        5 => {
+        CODE_SEND_DATA => {
             let result = cqe.result();
             match result {
                 _ if cqueue::notif(cqe.flags()) => {
@@ -369,7 +286,7 @@ fn handle_completion(
                 }
                 Err(e) => {
                     error!(client_id, "Send: {e:#}");
-                    kill_client(sqes, clients, client_id);
+                    clients.remove(client_id as usize);
                 }
             }
         }
