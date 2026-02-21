@@ -115,12 +115,10 @@ fn main() -> Result<()> {
         }
         let data_len = DATA.lock().unwrap().len();
         let n_pages = (data_len / 4096) as u32;
-        if sqes.is_empty() {
-            for (client_id, client) in &mut clients {
-                let client_id = u32::try_from(client_id)?;
-                get_client_caught_up(&mut sqes, n_pages, client_id, client)
-                    .context("get_client_caught_up")?;
-            }
+        for (client_id, client) in &mut clients {
+            let client_id = u32::try_from(client_id)?;
+            get_client_caught_up(&mut sqes, n_pages, client_id, client)
+                .context("get_client_caught_up")?;
         }
         let n_submitted = {
             let mut sq = uring.submission();
@@ -179,7 +177,7 @@ fn get_client_caught_up(
         let n = new_pages * 4096;
         let from = client.offset as usize;
         let to = from + n as usize;
-        let slice = &DATA.lock().unwrap()[client.offset as usize..];
+        let slice = &DATA.lock().unwrap()[client.offset as usize..to];
         let op = opcode::SendZc::new(
             io_uring::types::Fixed(client_id),
             slice.as_ptr(),
