@@ -4,12 +4,12 @@
 
 = Adaptive batching
 
-== Events, what events?
-// Removing boundaries
+// == Events, what events?
+// // Removing boundaries
 
-TODO: Show the `tokio::broadcast` channel with its events
+// TODO: Show the `tokio::broadcast` channel with its events
 
-Transform to a vec of bytes
+// Transform to a vec of bytes
 
 == Implementation \#2
 
@@ -70,7 +70,7 @@ static NOTIFY: Notify = Notify::const_new();
 loop {
     let msg = upstream.next().await?;
     let msg = add_ws_framing(msg);
-    DATA.lock().extend(&msg)?;
+    DATA.lock().await.extend(&msg)?;
     NOTIFY.notify_waiters();
 }
 ```
@@ -82,10 +82,10 @@ loop {
     tokio::spawn(async move {
         let ws = accept_async(conn).await?;
         let mut conn = ws.into_inner();
-        let mut offset = DATA.lock().len();
+        let mut offset = DATA.lock().await.len();
         loop {
             NOTIFY.notified().await;
-            let data = DATA.lock();
+            let data = DATA.await.lock();
             let new_data = &data[offset..];
             let n = conn.write(new_data).await?;
             offset += n;
@@ -151,7 +151,6 @@ table.hline(),
 [\#3], unknown, unknown,
 [\#4], unknown, unknown,
 ))
-#small[(restricted to one CPU)]
 
 #speaker-note[
 One thing to note:

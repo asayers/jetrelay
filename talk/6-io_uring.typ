@@ -74,6 +74,7 @@ You get two channels:
 - one coming from the kernel back to userspace (cqueue)
 ]
 
+
 == SQEs
 
 #grid(columns:(1fr, 1fr))[
@@ -96,6 +97,12 @@ let sqe = opcode::Write::new(
 ```
 ]
 
+Most syscalls have a corresponding SQE
+
+#pause
+
+...but not `sendfile()` 😔
+
 == CQEs
 
 ```rust
@@ -105,31 +112,6 @@ uring.submit_and_wait(1);
 
 let cqe = uring.completion().next().unwrap();
 println!("Result was {}", cqe.result()?);
-```
-
-== User data
-
-```rust
-squeue.push(sqe1.user_data(1));
-squeue.push(sqe2.user_data(2));
-uring.submit_and_wait(2);
-for cqe in uring.completion() {
-    println!(
-        "SQE {} returned {}",
-        cqe.user_data(),
-        cqe.result()?,
-    );
-}
-```
-
-== Setup
-
-```rust
-let uring = IoUring::builder()
-    .setup_single_issuer()
-    .setup_coop_taskrun()
-    .setup_defer_taskrun()
-    .build(8192)?;
 ```
 
 #speaker-note[
@@ -158,6 +140,20 @@ You can almost think of io_uring as a Tokio reactor implemented in kernelspace.
 (Caveat: I'm describing the behaviour of recent kernels)
 ]
 
+== User data
+
+```rust
+squeue.push(sqe1.user_data(1));
+squeue.push(sqe2.user_data(2));
+uring.submit_and_wait(2);
+for cqe in uring.completion() {
+    println!(
+        "SQE {} returned {}",
+        cqe.user_data(),
+        cqe.result()?,
+    );
+}
+```
 
 == Implementation \#4
 
@@ -172,15 +168,15 @@ static CLIENTS: Mutex<Slab<Client>> = Mutex::new(Slab::new());
 ```rust
 let sock = TcpListener::bind("0.0.0.0:80")?;
 let mut upstream = connect_websocket("...")?;
-let mut uring = IoUring::builder()....build(8192)?;
+let mut uring = IoUring::builder().build(8<<10)?;
 ```
 #titled-block(title: [`thread`])[
 ```rust
 loop {
     let msg = upstream.next()?;
-    data.extend(ws_header(&msg))?;
-    data.extend(&msg)?;
-    NOTIFY.notify_waiters();
+    let msg = add_ws_framing(msg);
+    DATA.extend(&msg)?;
+    assert!(DATA.len() <= 16 << 30);
 }
 ```
 ]],
@@ -189,10 +185,10 @@ titled-block(title: [`thread`])[
 loop {
     let (conn, _) = sock.accept()?;
     thread::spawn(move {
-        let ws = accept_websocket(conn)?;
-        CLIENTS.lock()?.insert(Client {
+        accept_websocket(&conn)?;
+        CLIENTS.insert(Client {
             conn,
-            offset: DATA.lock()?.len(),
+            offset: DATA.len(),
             in_flight: false,
         });
     });
@@ -209,10 +205,9 @@ loop {
 [
 ```rust
 loop {
-    for (client_id, client) in &mut clients {
-        let data = DATA.lock().unwrap();
-        if client.offset < data.len() && !client.in_flight {
-            let new_data = &data[client.offset..];
+    for (client_id, client) in &mut CLIENTS {
+        if client.offset < DATA.len() && !client.in_flight {
+            let new_data = &DATA[client.offset..];
             let sqe = opcode::Send::new(
                 client.conn.as_raw_fd(), new_data.as_ptr(), new_data.len() as u32,
             ).build();
@@ -223,7 +218,171 @@ loop {
     uring.submit_and_wait(1)?;
     for cqe in uring.completion() {
         let client_id = cqe.user_data();
-        let client = CLIENTS.lock()[client_id];
+        let client = CLIENTS[client_id];
+        let n = cqe.result()?;
+        client.offset += n;
+        client.in_flight = false;
+    }
+}
+```
+])
+]]
+
+== How does it do?
+
+#pause
+
+#let unknown = text(gray)[???]
+#align(center,
+table(columns:3, inset: 0.4em, stroke:none,
+table.header([*Impl*], [*Clients*], [*Throughput*]),
+table.hline(),
+[\#1], [2.7k], [4 Gbps],
+[\#2], [15k], [32 Gbps],
+[\#3], [48k], [80 Gbps],
+[\#4], [15k], [32 Gbps],
+))
+
+== Setup
+
+```rust
+let uring = IoUring::builder()
+    .setup_single_issuer()
+    .setup_coop_taskrun()
+    .setup_defer_taskrun()
+    .build(8<<10)?;
+```
+
+== Zero-copy
+
+```rust
+opcode::SendZc::new(
+    fd,
+    slice.as_ptr(),
+    slice.len() as u32,
+).build()
+```
+
+Produces two CQEs:
+- one when data _enters_ the send queue
+- one when data _leaves_ the send queue
+
+== Registered files
+
+```rust
+opcode::SendZc::new(
+    Fixed(1234), // <--- "fixed" == ring-local fd
+    slice.as_ptr(),
+    slice.len() as u32,
+).build()
+```
+
+Ring-local fds, faster to use than regular (per-process) fds
+
+```rust
+uring.submitter().register_files_sparse(100_000)?;
+```
+```rust
+uring.submitter().register_files_update(1234, &[some_fd])?;
+```
+
+== Registered buffers
+
+```rust
+opcode::SendZc::new(
+    Fixed(1234),
+    slice.as_ptr(),
+    slice.len() as u32,
+)
+.buf_index(Some(0)) // <--- `slice` must be inside buf #0
+.build();
+```
+
+Register regions of userspace memory; ops touching that memory run faster
+
+---
+
+```rust
+uring.submitter().register_buffers(&[libc::iovec {
+    iov_base: DATA.as_mut_ptr() as _,
+    iov_len: DATA.capacity(),
+}])?;
+// And make sure DATA never gets moved!
+```
+#v(1fr)
+
+== Implementation \#4.1
+
+#text(17pt)[
+```rust
+static DATA: Mutex<Vec<u8>> = Mutex::new(Vec::with_capacity(16 << 30));
+static CLIENTS: Mutex<Slab<Client>> = Mutex::new(Slab::new());
+```
+
+#grid(columns:2, gutter: 1em,
+[
+```rust
+let sock = TcpListener::bind("0.0.0.0:80")?;
+let mut upstream = connect_websocket("...")?;
+let mut uring = IoUring::builder()....build(8<<10)?;
+uring.submitter().register_files_sparse(100_000)?;
+uring.submitter().register_buffers(...)?;
+```
+#titled-block(title: [`thread`])[
+```rust
+loop {
+    let msg = upstream.next()?;
+    let msg = add_ws_framing(msg);
+    DATA.extend(&msg)?;
+    assert!(DATA.len() <= 16 << 30);
+}
+```
+]],
+titled-block(title: [`thread`])[
+```rust
+loop {
+    let (conn, _) = sock.accept()?;
+    thread::spawn(move {
+        accept_websocket(&conn)?;
+        assert!(client_id < 100_000);
+        uring.submitter().register_files_update(client_id, &[conn.as_raw_fd()]);
+        CLIENTS.insert(Client {
+            offset: DATA.len(),
+            in_flight: false,
+        });
+    });
+}
+```
+],
+)
+]
+
+#slide[
+
+#text(17pt)[
+#grid(columns:2, gutter: 1em,
+[
+```rust
+loop {
+    for (client_id, client) in CLIENTS.iter_mut() {
+        if client.offset < DATA.len() && !client.in_flight {
+            let new_data = &DATA[client.offset..];
+            let sqe = opcode::SendZc::new(
+                Fixed(client_id),
+                new_data.as_ptr(),
+                new_data.len() as u32,
+            )
+            .buf_index(Some(0))
+            .build();
+            uring.submission().push(sqe.user_data(client_id));
+            client.in_flight = true;
+        }
+    }
+    uring.submit_and_wait(1)?;
+    for cqe in uring.completion() {
+        if cqueue::notif(cqe.flags()) { continue; }
+        let client_id = cqe.user_data();
+        let client = CLIENTS[client_id];
         let n = cqe.result()?;
         client.offset += n;
         client.in_flight = false;
@@ -235,6 +394,8 @@ loop {
 
 
 
+
+
 // #text(17pt)[
 
 // #grid(columns:2, gutter: 1em,
@@ -242,7 +403,7 @@ loop {
 // ```rust
 // let sock = TcpListener::bind("0.0.0.0:80")?;
 // let mut upstream = connect_websocket("...")?;
-// let mut uring = IoUring::builder()....build(8192)?;
+// let mut uring = IoUring::builder()....build(8<<10)?;
 // static DATA: Mutex<Vec<u8>> = Mutex::new(Vec::with_capacity(16 << 30));
 // static NOTIFY: Notify = Notify::const_new();
 
@@ -255,6 +416,7 @@ loop {
 // let mut clients = Slab::<Client>::default();
 
 // ```
+
 
 // #titled-block(title: [`thread`])[
 // ```rust
@@ -306,6 +468,9 @@ Error: Cannot allocate memory
 - `LimitMEMLOCK`
 - `rlimit::setrlimit(Resource::MEMLOCK)`
 
+```console
+systemd-run --user -p LimitNOFILE=100000 -p LimitMEMLOCK=infinity
+```
 ---
 
 #let unknown = text(gray)[???]
@@ -314,11 +479,10 @@ table(columns:3, inset: 0.4em, stroke:none,
 table.header([*Impl*], [*Clients*], [*Throughput*]),
 table.hline(),
 [\#1], [2.7k], [4 Gbps],
-[\#2], [31k], [52 Gbps],
+[\#2], [15k], [32 Gbps],
 [\#3], [48k], [80 Gbps],
-[\#4], [30k], [50 Gbps],
+[\#4.1], [70k], [147 Gbps],
 ))
-#small[(restricted to one CPU)]
 
 == Possibilities
 

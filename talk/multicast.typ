@@ -1,9 +1,16 @@
 #import "@preview/touying:0.6.1": *
 #import "util.typ": *
 
-= Multicast
+= What about...?
 
-== Multicast
+== What about TLS?
+
+- don't encrypt
+- ktls
+    - hardware offload
+- nginx
+
+== What about UDP multicast?
 
 #speaker-note[
 We want to send a copy of each messages to all connected clients.
@@ -89,7 +96,7 @@ it's defined as websockets, which means TCP, and that's that (if we want to be c
 so UDP multicast is not going to help us
 ]
 
-== Going even further...
+*Going even further...*
 
 L1 fanout
 

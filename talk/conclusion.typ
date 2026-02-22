@@ -20,15 +20,9 @@ so I'm drawing the line there.
 
 == Where to go from here?
 
-- Kernel bypass
-- Custom hardware
-
-== What about TLS?
-
-- don't encrypt
-- ktls
-    - hardware offload
-- nginx
+- More threads, more rings
+- Kernel bypass?
+- Custom hardware...
 
 == Conclusions
 

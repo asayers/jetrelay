@@ -328,7 +328,6 @@ table.hline(),
 [\#3], [48k], [80 Gbps], // 30k => <1s
 [\#4], unknown, unknown,
 ))
-#small[(restricted to one CPU)]
 
 #speaker-note[
 By the way, we could have just used a regular file instead of a memfd.

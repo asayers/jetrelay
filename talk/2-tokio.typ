@@ -15,6 +15,38 @@
 - `broadcast::channel()` (from tokio)
     - Sent values seen by all consumers
 
+== Broadcast channel
+
+#image("broadcast_1.svg", height: 50%)
+---
+#image("broadcast_2.svg", height: 50%)
+---
+#image("broadcast_3.svg", height: 50%)
+---
+#image("broadcast_4.svg", height: 50%)
+---
+#image("broadcast_5.svg", height: 50%)
+---
+#image("broadcast_6.svg", height: 50%)
+---
+#image("broadcast_7.svg", height: 50%)
+---
+#image("broadcast_8.svg", height: 50%)
+---
+#image("broadcast_9.svg", height: 50%)
+---
+#image("broadcast_10.svg", height: 50%)
+---
+#image("broadcast_11.svg", height: 50%)
+---
+#image("broadcast_12.svg", height: 50%)
+---
+#image("broadcast_13.svg", height: 50%)
+
+#speaker-note[
+Customise to support cursor=...
+]
+
 == Implementation \#1
 
 // New events arrive from upstream,
@@ -55,44 +87,7 @@ loop {
 
 ]
 
-== Broadcast channel
-
-#image("broadcast_1.svg", height: 50%)
----
-#image("broadcast_2.svg", height: 50%)
----
-#image("broadcast_3.svg", height: 50%)
----
-#image("broadcast_4.svg", height: 50%)
----
-#image("broadcast_5.svg", height: 50%)
----
-#image("broadcast_6.svg", height: 50%)
----
-#image("broadcast_7.svg", height: 50%)
----
-#image("broadcast_8.svg", height: 50%)
----
-#image("broadcast_9.svg", height: 50%)
----
-#image("broadcast_10.svg", height: 50%)
----
-#image("broadcast_11.svg", height: 50%)
----
-#image("broadcast_12.svg", height: 50%)
----
-#image("broadcast_13.svg", height: 50%)
-
-#speaker-note[
-Customise to support cursor=...
-]
-
 == How does it do?
-
-#speaker-note[
-I'm going to connect more and more clients to it until it can't keep up any more.
-Restricted to one CPU.
-]
 
 ---
 
@@ -114,7 +109,7 @@ Error: Too many open files (os error 24)
 #pause
 
 ```console
-systemd-run --user -p LimitNOFILE=100000 -p CPUQuota=100%
+systemd-run --user -p LimitNOFILE=100000
 ```
 
 ---
@@ -129,7 +124,6 @@ table.hline(),
 [\#3], unknown, unknown,
 [\#4], unknown, unknown,
 ))
-#small[(restricted to one CPU)]
 
 #speaker-note[
 Can manage \~9.8 Gbps

@@ -14,7 +14,6 @@ use wsclient::OpCode;
 
 static DATA: LazyLock<Mutex<Vec<u8>>> = LazyLock::new(|| Mutex::new(Vec::with_capacity(MAX_DATA)));
 const MAX_DATA: usize = 1024 * 1024 * 1024;
-
 const MAX_FILES: u32 = 100_000;
 
 fn main() -> Result<()> {
@@ -81,7 +80,7 @@ fn main() -> Result<()> {
                 let mut data = DATA.lock().unwrap();
                 let to = data.len() + frame.bytes.len() as usize;
                 assert!(to < MAX_DATA);
-                data.extend_from_slice(&frame.bytes);
+                data.extend(&frame.bytes);
             }
             anyhow::Ok(())
         })?;
@@ -187,17 +186,12 @@ fn get_client_caught_up(
         let data = DATA.lock().unwrap();
         let to = (from + n as usize).min(data.len());
         let slice = &data[client.offset as usize..to];
-        // let op = opcode::SendZc::new(
-        //     io_uring::types::Fixed(client_id),
-        //     slice.as_ptr(),
-        //     slice.len() as u32,
-        // )
-        let op = opcode::WriteFixed::new(
+        let op = opcode::SendZc::new(
             io_uring::types::Fixed(client_id),
             slice.as_ptr(),
             slice.len() as u32,
-            0,
         )
+        .buf_index(Some(0))
         .build()
         .user_data(client_id as u64);
         sqes.push(op);
