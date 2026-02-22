@@ -184,8 +184,9 @@ fn get_client_caught_up(
         let new_pages = n_pages - last_page;
         let n = new_pages * 4096;
         let from = client.offset as usize;
-        let to = from + n as usize;
-        let slice = &DATA.lock().unwrap()[client.offset as usize..to];
+        let data = DATA.lock().unwrap();
+        let to = (from + n as usize).min(data.len());
+        let slice = &data[client.offset as usize..to];
         // let op = opcode::SendZc::new(
         //     io_uring::types::Fixed(client_id),
         //     slice.as_ptr(),
