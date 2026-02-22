@@ -61,7 +61,7 @@ for cqe in uring.completion() {
 ```
 ]]
 
-== How does it do?
+== Performance
 
 // == Thundering herd
 

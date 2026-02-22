@@ -310,13 +310,9 @@ loop {
                 // Err(_) => break,
 ]
 
-== Caveats
+== Performance
 
-- Portability
-- Memory locked in page cache
-- Can modify in-flight data
-
-== How does it do?
+---
 
 #let unknown = text(gray)[???]
 #align(center,
@@ -324,7 +320,7 @@ table(columns:3, inset: 0.4em, stroke:none,
 table.header([*Impl*], [*Clients*], [*Throughput*]),
 table.hline(),
 [\#1], [2.7k], [4 Gbps],
-[\#2], [31k], [52 Gbps],
+[\#2], [15k], [32 Gbps],
 [\#3], [48k], [80 Gbps], // 30k => <1s
 [\#4], unknown, unknown,
 ))
@@ -350,6 +346,12 @@ The kernel will pass these slices to the NIC,
 and the NIC will deference them, and read bytes directly out of RAM and onto the wire.
 So it really is zero copy!
 ]
+
+== Caveats
+
+- Portability
+- Memory locked in page cache
+- Can modify in-flight data
 
 /*
 == Ownership

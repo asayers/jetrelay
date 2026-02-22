@@ -87,7 +87,7 @@ loop {
 
 ]
 
-== How does it do?
+== Performance
 
 ---
 

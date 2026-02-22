@@ -228,7 +228,7 @@ loop {
 ])
 ]]
 
-== How does it do?
+== Performance
 
 #pause
 
@@ -449,7 +449,7 @@ loop {
 // ]
 
 
-== How does it do?
+== Performance
 
 ---
 

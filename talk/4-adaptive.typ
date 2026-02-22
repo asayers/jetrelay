@@ -28,7 +28,7 @@ static DATA: Mutex<Vec<u8>> = Mutex::new(Vec::new());
 loop {
     let msg = upstream.next().await?;
     let msg = add_ws_framing(msg);
-    DATA.lock().extend(&msg)?;
+    DATA.lock().await.extend(&msg)?;
 
 }
 ```
@@ -38,12 +38,12 @@ titled-block(title: [`task`])[
 loop {
     let (conn, _) = sock.accept().await?;
     tokio::spawn(async move {
-        let ws = accept_async(conn).await?;
+        accept_async(&conn).await?;
         let mut conn = ws.into_inner();
-        let mut offset = DATA.lock().len();
+        let mut offset = DATA.lock().await.len();
         loop {
 
-            let data = DATA.lock();
+            let data = DATA.lock().await;
             let new_data = &data[offset..];
             let n = conn.write(new_data).await?;
             offset += n;
@@ -80,12 +80,12 @@ titled-block(title: [`task`])[
 loop {
     let (conn, _) = sock.accept().await?;
     tokio::spawn(async move {
-        let ws = accept_async(conn).await?;
+        accept_async(&conn).await?;
         let mut conn = ws.into_inner();
         let mut offset = DATA.lock().await.len();
         loop {
             NOTIFY.notified().await;
-            let data = DATA.await.lock();
+            let data = DATA.lock().await;
             let new_data = &data[offset..];
             let n = conn.write(new_data).await?;
             offset += n;
@@ -120,7 +120,7 @@ Client is *keeping up* ⇒  send *\~500 B* chunks ⇒  *low latency*
 Client is *way behind* ⇒  send *1 MiB* chunks ⇒ *high throughput*
 #v(1fr)
 
-== How does it do?
+== Performance
 
 ---
 
@@ -147,7 +147,8 @@ table(columns:3, inset: 0.4em, stroke:none,
 table.header([*Impl*], [*Clients*], [*Throughput*]),
 table.hline(),
 [\#1], [2.7k], [4 Gbps],
-[\#2], [31k], [52 Gbps],  // 31k => 3.5s, 25k => 2s, 13k => 1s
+[\#2], [15k], [32 Gbps],
+// [\#2], [31k], [52 Gbps],  // 31k => 3.5s, 25k => 2s, 13k => 1s
 [\#3], unknown, unknown,
 [\#4], unknown, unknown,
 ))
