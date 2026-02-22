@@ -89,6 +89,19 @@ Sec-WebSocket-Accept: UzQo2NzMDEyM1NggMTIzND5=
 ```
 ]
 
+---
+
+#{
+  text(fill: red)[`\x81\x0c`]
+  raw("Hello Tokyo!")
+  text(fill: red)[`\x81\x0d`]
+  raw("Goodbye Tokyo")
+}
+
+#text(fill: gray)[
+```text
+<-len--><-payload--><-len--><--payload-->
+```]
 /*
 #slide[
 

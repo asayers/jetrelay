@@ -212,7 +212,7 @@ fn handle_completion(cqe: cqueue::Entry, clients: &mut Slab<Client>) -> Result<(
         }
         Err(e) => {
             error!(client_id, "Send: {e:#}");
-            clients.remove(client_id as usize);
+            // clients.remove(client_id as usize);
         }
     }
     Ok(())

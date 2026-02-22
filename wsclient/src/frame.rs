@@ -168,3 +168,10 @@ fn parse_length(buffer: &[u8]) -> Result<(usize, usize), NeedMoreBytes> {
 
     Ok((header_len, payload_len))
 }
+
+#[test]
+fn foo() {
+    dbg!(Frame::text("Hello Tokyo!"));
+    dbg!(Frame::text("Goodbye Tokyo"));
+    panic!()
+}

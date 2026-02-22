@@ -8,13 +8,12 @@
 - tungstenite
     - `connect_async()` - handshake w/ server
     - `accept_async()` - handshake w/ client
-    - You get a `Stream<Message>`
+    - Both return `impl Stream<Message> + Sink<Message>`
 
 #pause
 
 - `broadcast::channel()` (from tokio)
-    - Send values
-    - seen by all consumers
+    - Sent values seen by all consumers
 
 == Implementation \#1
 

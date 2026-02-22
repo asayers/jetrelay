@@ -6,7 +6,6 @@
 
 = Zero-copy
 
-
 == `write()`ing to a TCP socket
 
 - Copy bytes from userspace buffer to socket's `sk_write_queue`
@@ -25,13 +24,35 @@
 // individually refcounted, in the page's reference counter.
 // ]
 
+#grid(columns:(1fr, 1.2fr),
+[
 ```c
 struct page_frag {
-    struct page *page; // backing allocation, refcounted
+    // backing allocation
+    // (refcounted)
+    struct page *page;
     __u16 offset;
     __u16 size;
 };
 ```
+],
+[
+#text(16pt)[
+```text
+    Arc ptrs                   ┌─────────┐
+    ________________________ / │ Bytes 2 │
+   /                           └─────────┘
+  /          ┌───────────┐     |         |
+ |_________/ │  Bytes 1  │     |         |
+ |           └───────────┘     |         |
+ |           |           | ___/ data     | tail
+ |      data |      tail |/              |
+ v           v           v               v
+ ┌─────┬─────┬───────────┬───────────────┬─────┐
+ │ Arc │     │           │               │     │
+ └─────┴─────┴───────────┴───────────────┴─────┘
+```]
+])
 
 // If you're ever used the "bytes" crate this may look familiar
 
