@@ -2,6 +2,7 @@ use anyhow::{Context, Result, bail, ensure};
 use io_uring::types::Timespec;
 use io_uring::{IoUring, opcode};
 use io_uring::{cqueue, squeue};
+use libc::iovec;
 use rustix::fd::AsRawFd;
 use slab::Slab;
 use std::io::Write;
@@ -34,6 +35,13 @@ fn main() -> Result<()> {
         .build(8192)
         .context("Build ring")?;
     uring.submitter().register_files_sparse(MAX_FILES)?;
+    unsafe {
+        let ptr = DATA.lock().unwrap().as_mut_ptr();
+        uring.submitter().register_buffers(&[iovec {
+            iov_base: ptr as _,
+            iov_len: MAX_DATA,
+        }])?;
+    }
     info!(fd = uring.as_raw_fd(), "Set up the uring");
 
     // Bind the listener socket ASAP
@@ -178,10 +186,16 @@ fn get_client_caught_up(
         let from = client.offset as usize;
         let to = from + n as usize;
         let slice = &DATA.lock().unwrap()[client.offset as usize..to];
-        let op = opcode::SendZc::new(
+        // let op = opcode::SendZc::new(
+        //     io_uring::types::Fixed(client_id),
+        //     slice.as_ptr(),
+        //     slice.len() as u32,
+        // )
+        let op = opcode::WriteFixed::new(
             io_uring::types::Fixed(client_id),
             slice.as_ptr(),
             slice.len() as u32,
+            0,
         )
         .build()
         .user_data(client_id as u64);
