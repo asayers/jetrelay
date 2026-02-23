@@ -102,6 +102,13 @@ Sec-WebSocket-Accept: UzQo2NzMDEyM1NggMTIzND5=
 ```text
 <-len--><-payload--><-len--><--payload-->
 ```]
+
+#v(1fr)
+#small[
+There's a bit more to it, but not much more!
+]
+#v(0.5fr)
+
 /*
 #slide[
 

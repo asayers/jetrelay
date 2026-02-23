@@ -6,15 +6,17 @@
 
 = Zero-copy
 
-== `write()`ing to a TCP socket
+== TCP send queue
 
-- Copy bytes from userspace buffer to socket's `sk_write_queue`
-- Returns once the bytes are safely appended to queue
-  - May take the chance to do some socket work
-    - Which might include actually sending those bytes
-- Bytes in the queue will be sent, possibly multiple times
-- When an ACK arrives, bytes are discarded from the front of the queue
-- How is data stored in the queue?
+Logically, a queue of bytes
+
+Typically a few MiB in capacity
+
+`write()`ing to the socket pushes to the back
+
+Bytes at the front get packetised & sent
+
+Bytes dropped from the front when ACK'd
 
 == Fragments
 
@@ -262,7 +264,7 @@ Take a slice of `file` and push it onto `sock`'s send queue
 
 == Implementation \#3
 
-#text(17pt)[
+#text(16pt)[
 
 #grid(columns:2, gutter: 1em,
 [
@@ -294,25 +296,21 @@ loop {
         let mut offset = DATA.metadata()?.len();
         loop {
             NOTIFY.notified().await;
-            conn.writable().await?;
-            rustix::fs::sendfile(
-                &conn, &*DATA,
-                Some(&mut offset), n
-            )?;
+            conn.async_io(Interest::WRITABLE, || {
+                rustix::fs::sendfile(
+                    &conn, &*DATA,
+                    Some(&mut offset), 2 << 20,
+                )
+            }).await?;
         }
     });
 }
 ```
 ])
 
-                // Ok(()) => (),
-                // Err(e) if e.kind() == ErrorKind::WouldBlock => (), // loop
-                // Err(_) => break,
 ]
 
 == Performance
-
----
 
 #let unknown = text(gray)[???]
 #align(center,
@@ -334,8 +332,9 @@ except that the data gets sync'd to disk after a while
 == Zero-copy options
 
 - `sendfile()`
+- `splice()` and `tee()`
+- `vmsplice()`
 - `MSG_ZEROCOPY`
-- `splice()`/`vmsplice()`/`tee()`
 
 #speaker-note[
 By the way, if you recall the diagram from earlier,
@@ -351,7 +350,7 @@ So it really is zero copy!
 
 - Portability
 - Memory locked in page cache
-- Can modify in-flight data
+- Modifying in-flight data
 
 /*
 == Ownership

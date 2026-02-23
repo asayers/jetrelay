@@ -10,7 +10,7 @@ use std::{
         atomic::{AtomicU64, Ordering},
     },
 };
-use tokio::{net::TcpListener, sync::Notify};
+use tokio::{io::Interest, net::TcpListener, sync::Notify};
 use tokio_tungstenite::tungstenite::Message;
 use tracing::{Level, debug, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
@@ -87,12 +87,16 @@ async fn main() -> Result<()> {
                 NOTIFY.notified().await;
                 // There's data to send - send it!
                 let file_len = FILE_LEN.load(Ordering::Acquire);
-                let n = (file_len - offset) as usize;
-                conn.writable().await?;
-                match sendfile(&conn, &*MEMFD, Some(&mut offset), n) {
+                // let n = (file_len - offset) as usize;
+                match conn
+                    .async_io(Interest::WRITABLE, || {
+                        rustix::fs::sendfile(&conn, &*MEMFD, Some(&mut offset), 2 << 20)
+                            .map_err(|e| e.into())
+                    })
+                    .await
+                {
                     Ok(_) => (),
                     Err(e) => match e.kind() {
-                        ErrorKind::WouldBlock => (), // loop
                         ErrorKind::BrokenPipe | ErrorKind::ConnectionReset => {
                             debug!("Socket closed by other side");
                             break anyhow::Ok(());

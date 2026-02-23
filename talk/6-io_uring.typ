@@ -230,8 +230,6 @@ loop {
 
 == Performance
 
-#pause
-
 #let unknown = text(gray)[???]
 #align(center,
 table(columns:3, inset: 0.4em, stroke:none,

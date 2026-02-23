@@ -1,8 +1,29 @@
 #import "@preview/touying:0.6.1": *
 #import "util.typ": *
 
-
 = Adaptive batching
+
+== Batching messages
+
+#v(1fr)
+Msgs come in @ 400 Hz
+#v(1fr)
+
+Send in batches of 100 msgs:
+
+#align(center)[
+#grid(columns:(1fr, 3fr, 1fr, 3fr, 1fr),
+[],
+[400x 0.5 KiB `write()`s],
+[$-->$],
+[4x 50 KiB `write()`s],
+[]
+)]
+
+#v(1fr)
+Cost: 125ms added latency on average
+#v(1fr)
+
 
 // == Events, what events?
 // // Removing boundaries
@@ -39,7 +60,6 @@ loop {
     let (conn, _) = sock.accept().await?;
     tokio::spawn(async move {
         accept_async(&conn).await?;
-        let mut conn = ws.into_inner();
         let mut offset = DATA.lock().await.len();
         loop {
 
@@ -81,7 +101,6 @@ loop {
     let (conn, _) = sock.accept().await?;
     tokio::spawn(async move {
         accept_async(&conn).await?;
-        let mut conn = ws.into_inner();
         let mut offset = DATA.lock().await.len();
         loop {
             NOTIFY.notified().await;
@@ -109,7 +128,7 @@ loop {
 == Adaptive batching
 
 #v(1fr)
-Client is *keeping up* ⇒  send *\~500 B* chunks ⇒  *low latency*
+Client is *keeping up* ⇒  send *0.5 KiB* chunks ⇒  *low latency*
 
 #align(center)[
 ↑ \
@@ -117,29 +136,25 @@ Client is *keeping up* ⇒  send *\~500 B* chunks ⇒  *low latency*
 ↓
 ]
 
-Client is *way behind* ⇒  send *1 MiB* chunks ⇒ *high throughput*
+Client is *way behind* ⇒  send *2 MiB* chunks ⇒ *high throughput*
 #v(1fr)
 
 == Performance
 
----
+// #v(1em)
+// #align(center)[
+// #text(red.darken(30%))[
+// ```
+// Error: Cannot assign requested address (os error 99)
+// ```
+// ]]
+// #v(1em)
 
-#v(1em)
-#align(center)[
-#text(red.darken(30%))[
-```
-Error: Cannot assign requested address (os error 99)
-```
-]]
-#v(1em)
+// #pause
 
-#pause
-
-```
-sysctl -w net.ipv4.ip_local_port_range="1024 65535"
-```
-
----
+// ```
+// sysctl -w net.ipv4.ip_local_port_range="1024 65535"
+// ```
 
 #let unknown = text(gray)[???]
 #align(center,
