@@ -1,7 +1,7 @@
 #import "@preview/touying:0.6.1": *
 #import "util.typ": *
 
-= Adaptive batching
+= Batching
 
 == Batching messages
 
@@ -35,48 +35,7 @@ Cost: 125ms added latency on average
 == Implementation \#2
 
 #text(17pt)[
-#grid(columns:2, gutter: 1em,
-[
-```rust
-let sock = TcpListener::bind("0.0.0.0:80").await?;
-let (mut upstream, _) = connect_async("...").await?;
-static DATA: Mutex<Vec<u8>> = Mutex::new(Vec::new());
- 
-```
-
-#titled-block(title: [`task`])[
-```rust
-loop {
-    let msg = upstream.next().await?;
-    let msg = add_ws_framing(msg);
-    DATA.lock().await.extend(&msg)?;
-
-}
-```
-]],
-titled-block(title: [`task`])[
-```rust
-loop {
-    let (conn, _) = sock.accept().await?;
-    tokio::spawn(async move {
-        accept_async(&conn).await?;
-        let mut offset = DATA.lock().await.len();
-        loop {
-
-            let data = DATA.lock().await;
-            let new_data = &data[offset..];
-            let n = conn.write(new_data).await?;
-            offset += n;
-        }
-    });
-}
-```
-])]
-
----
-
-#text(17pt)[
-#grid(columns:2, gutter: 1em,
+#grid(columns:(1fr, 1fr), gutter: 1em,
 [
 ```rust
 let sock = TcpListener::bind("0.0.0.0:80").await?;
@@ -141,20 +100,24 @@ Client is *way behind* ⇒  send *2 MiB* chunks ⇒ *high throughput*
 
 == Performance
 
-// #v(1em)
-// #align(center)[
-// #text(red.darken(30%))[
-// ```
-// Error: Cannot assign requested address (os error 99)
-// ```
-// ]]
-// #v(1em)
+---
 
-// #pause
+#v(1em)
+#align(center)[
+#text(red.darken(30%))[
+```
+Error: Cannot assign requested address (os error 99)
+```
+]]
+#v(1em)
 
-// ```
-// sysctl -w net.ipv4.ip_local_port_range="1024 65535"
-// ```
+#pause
+
+```
+sysctl -w net.ipv4.ip_local_port_range="1024 65535"
+```
+
+---
 
 #let unknown = text(gray)[???]
 #align(center,

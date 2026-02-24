@@ -23,7 +23,24 @@
     depth: self.slide-level,
   ),
   footer-right: context utils.slide-counter.display(),
-  config-common(new-section-slide-fn: none),
+  config-common(new-section-slide-fn: section => {
+    touying-slide-wrapper(self => {
+      touying-slide(
+        self: self,
+        {
+          set align(center + horizon)
+          set text(size: 2em, weight: "bold")
+          show text: underline.with(
+              background: true,
+              stroke: (thickness: .3em, paint: rgb("E8C872").lighten(50%), cap: "round"),
+              evade: false,
+              extent: .2em,
+          )
+          utils.display-current-heading(level: 1)
+        },
+      )
+    })
+  }),
 )
 #let accent2 = rgb("E8C872")
 #show heading.where(level: 2): underline.with(

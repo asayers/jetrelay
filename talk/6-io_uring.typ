@@ -1,7 +1,7 @@
 #import "@preview/touying:0.6.1": *
 #import "util.typ": *
 
-= io_uring
+= The in-kernel reactor
 
 == `write() write() write()`
 
@@ -75,34 +75,6 @@ You get two channels:
 ]
 
 
-== SQEs
-
-#grid(columns:(1fr, 1fr))[
-*Syscall*
-```rust
-libc::write(
-    conn.as_raw_fd(),
-    buf.as_ptr(),
-    buf.len(),
-);
-```
-][
-*SQE*
-```rust
-let sqe = opcode::Write::new(
-    conn.as_raw_fd(),
-    buf.as_ptr(),
-    buf.len(),
-).build();
-```
-]
-
-Most syscalls have a corresponding SQE
-
-#pause
-
-...but not `sendfile()` 😔
-
 == CQEs
 
 ```rust
@@ -140,20 +112,62 @@ You can almost think of io_uring as a Tokio reactor implemented in kernelspace.
 (Caveat: I'm describing the behaviour of recent kernels)
 ]
 
-== User data
+== What SQE?
+
+#grid(columns:(1fr, 1fr))[
+*Syscall*
+```rust
+libc::write(
+    conn.as_raw_fd(),
+    buf.as_ptr(),
+    buf.len(),
+);
+```
+][
+*SQE*
+```rust
+let sqe = opcode::Write::new(
+    conn.as_raw_fd(),
+    buf.as_ptr(),
+    buf.len(),
+).build();
+```
+]
+
+Most syscalls have a corresponding SQE
+
+#pause
+
+...but not `sendfile()` 😔
+
+---
 
 ```rust
-squeue.push(sqe1.user_data(1));
-squeue.push(sqe2.user_data(2));
-uring.submit_and_wait(2);
-for cqe in uring.completion() {
-    println!(
-        "SQE {} returned {}",
-        cqe.user_data(),
-        cqe.result()?,
-    );
-}
+opcode::SendZc::new(
+    fd,
+    slice.as_ptr(),
+    slice.len() as u32,
+).build()
 ```
+
+Produces two CQEs:
+- one when data _enters_ the send queue
+- one when data _leaves_ the send queue
+
+// == User data
+
+// ```rust
+// squeue.push(sqe1.user_data(1));
+// squeue.push(sqe2.user_data(2));
+// uring.submit_and_wait(2);
+// for cqe in uring.completion() {
+//     println!(
+//         "SQE {} returned {}",
+//         cqe.user_data(),
+//         cqe.result()?,
+//     );
+// }
+// ```
 
 == Implementation \#4
 
@@ -208,7 +222,7 @@ loop {
     for (client_id, client) in &mut CLIENTS {
         if client.offset < DATA.len() && !client.in_flight {
             let new_data = &DATA[client.offset..];
-            let sqe = opcode::Send::new(
+            let sqe = opcode::SendZc::new(
                 client.conn.as_raw_fd(), new_data.as_ptr(), new_data.len() as u32,
             ).build();
             uring.submission().push(sqe.user_data(client_id));
@@ -250,20 +264,6 @@ let uring = IoUring::builder()
     .setup_defer_taskrun()
     .build(8<<10)?;
 ```
-
-== Zero-copy
-
-```rust
-opcode::SendZc::new(
-    fd,
-    slice.as_ptr(),
-    slice.len() as u32,
-).build()
-```
-
-Produces two CQEs:
-- one when data _enters_ the send queue
-- one when data _leaves_ the send queue
 
 == Registered files
 
@@ -308,91 +308,6 @@ uring.submitter().register_buffers(&[libc::iovec {
 // And make sure DATA never gets moved!
 ```
 #v(1fr)
-
-== Implementation \#4.1
-
-#text(17pt)[
-```rust
-static DATA: Mutex<Vec<u8>> = Mutex::new(Vec::with_capacity(16 << 30));
-static CLIENTS: Mutex<Slab<Client>> = Mutex::new(Slab::new());
-```
-
-#grid(columns:2, gutter: 1em,
-[
-```rust
-let sock = TcpListener::bind("0.0.0.0:80")?;
-let mut upstream = connect_websocket("...")?;
-let mut uring = IoUring::builder()....build(8<<10)?;
-uring.submitter().register_files_sparse(100_000)?;
-uring.submitter().register_buffers(...)?;
-```
-#titled-block(title: [`thread`])[
-```rust
-loop {
-    let msg = upstream.next()?;
-    let msg = add_ws_framing(msg);
-    DATA.extend(&msg)?;
-    assert!(DATA.len() <= 16 << 30);
-}
-```
-]],
-titled-block(title: [`thread`])[
-```rust
-loop {
-    let (conn, _) = sock.accept()?;
-    thread::spawn(move {
-        accept_websocket(&conn)?;
-        assert!(client_id < 100_000);
-        uring.submitter().register_files_update(client_id, &[conn.as_raw_fd()]);
-        CLIENTS.insert(Client {
-            offset: DATA.len(),
-            in_flight: false,
-        });
-    });
-}
-```
-],
-)
-]
-
-#slide[
-
-#text(17pt)[
-#grid(columns:2, gutter: 1em,
-[
-```rust
-loop {
-    for (client_id, client) in CLIENTS.iter_mut() {
-        if client.offset < DATA.len() && !client.in_flight {
-            let new_data = &DATA[client.offset..];
-            let sqe = opcode::SendZc::new(
-                Fixed(client_id),
-                new_data.as_ptr(),
-                new_data.len() as u32,
-            )
-            .buf_index(Some(0))
-            .build();
-            uring.submission().push(sqe.user_data(client_id));
-            client.in_flight = true;
-        }
-    }
-    uring.submit_and_wait(1)?;
-    for cqe in uring.completion() {
-        if cqueue::notif(cqe.flags()) { continue; }
-        let client_id = cqe.user_data();
-        let client = CLIENTS[client_id];
-        let n = cqe.result()?;
-        client.offset += n;
-        client.in_flight = false;
-    }
-}
-```
-])
-]]
-
-
-
-
 
 // #text(17pt)[
 

@@ -1,7 +1,7 @@
 #import "@preview/touying:0.6.1": *
 #import "util.typ": *
 
-= Tokio + Tungstenite
+= Baseline impl
 
 == Shopping for components
 
@@ -61,7 +61,7 @@ let (mut upstream, _) = connect_async("wss://jetstream...").await?;
 let (tx, rx) = broadcast::channel::<Message>(1024);
 ```
 
-#grid(columns:2, gutter: 1em,
+#grid(columns:(2fr, 3fr), gutter: 1em,
 titled-block(title: [`task`])[
 ```rust
 loop {
@@ -74,11 +74,11 @@ titled-block(title: [`task`])[
 ```rust
 loop {
     let (conn, _) = sock.accept().await?;
-    let rx = rx.resubscribe();
+    let from_firehose = rx.resubscribe();
     tokio::spawn(async move {
-        let mut ws = accept_async(conn).await?;
-        while let Ok(msg) = rx.recv().await {
-            ws.send(msg).await?;
+        let mut to_client = accept_async(conn).await?;
+        while let Ok(msg) = from_firehose.recv().await {
+            to_client.send(msg).await?;
         }
     });
 }

@@ -1,14 +1,15 @@
 #import "@preview/touying:0.6.1": *
 #import "util.typ": *
 
-= What about...?
+= What about ... ?
 
-== What about TLS?
+== What about page cache fragmentation?
 
-- don't encrypt
-- ktls
-    - hardware offload
-- nginx
+#align(center, image("ownership.svg", width: 70%))
+---
+#v(1.5mm)
+#align(center, image("ownership_2.svg", width: 70%))
+
 
 == What about UDP multicast?
 
@@ -100,3 +101,9 @@ so UDP multicast is not going to help us
 
 L1 fanout
 
+== What about TLS?
+
+- don't encrypt
+- ktls
+    - hardware offload
+- nginx

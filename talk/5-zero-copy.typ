@@ -26,8 +26,9 @@ Bytes dropped from the front when ACK'd
 // individually refcounted, in the page's reference counter.
 // ]
 
-#grid(columns:(1fr, 1.2fr),
+#grid(columns:(1fr, 1.2fr), gutter: 1em,
 [
+#titled-block(title: [`C`])[
 ```c
 struct page_frag {
     // backing allocation
@@ -37,6 +38,7 @@ struct page_frag {
     __u16 size;
 };
 ```
+]
 ],
 [
 #text(16pt)[
@@ -95,8 +97,6 @@ A buffer
 ...owned by the kernel
 
 ...that will survive across multiple `write()`s
-
-...with a handle to refer to it from userspace
 
 #speaker-note[
 
@@ -207,7 +207,7 @@ Same as creating a file in /tmp \
 == memfd
 
 ```rust
-let file = memfd_create("my_special_data", MemfdFlags::CLOEXEC)?;
+let file = memfd_create("firehose", MemfdFlags::CLOEXEC)?;
 ```
 
 #pause
@@ -232,7 +232,7 @@ $ ls -l /proc/272127/fd
 lrwx------ - asayers 30 Dec 16:05 0 -> /dev/pts/10
 lrwx------ - asayers 30 Dec 16:05 1 -> /dev/pts/10
 lrwx------ - asayers 30 Dec 16:05 2 -> /dev/pts/10
-lrwx------ - asayers 30 Dec 16:05 3 -> '/memfd:my_special_data (deleted)'
+lrwx------ - asayers 30 Dec 16:05 3 -> '/memfd:firehose (deleted)'
 ```
 
 #speaker-note[
@@ -255,12 +255,15 @@ This has got to be one of the craziest user interfaces I've ever seen
 
 #speaker-note[
 Take a slice of `file` and push it onto `sock`'s send queue
-// ```
-// sendfile(sock, file, offset, len)
-// ```
 ]
 
-#align(center, image("zerocopy_4.svg", height: 80%))
+#align(center, image("zerocopy_4.svg", height: 70%))
+
+#align(center)[
+```rust
+sendfile(sock, file, offset, len)
+```
+]
 
 == Implementation \#3
 
@@ -272,7 +275,7 @@ Take a slice of `file` and push it onto `sock`'s send queue
 let sock = TcpListener::bind("0.0.0.0:80").await?;
 let (mut upstream, _) = connect_async("...").await?;
 static DATA: LazyLock<File> = LazyLock::new(||
-    memfd_create("bsky.dat"), MemfdFlags::CLOEXEC,
+    memfd_create("firehose", ...),
 );
 static NOTIFY: Notify = Notify::const_new();
 ```
@@ -329,6 +332,12 @@ It would all work the exact same way
 except that the data gets sync'd to disk after a while
 ]
 
+== Caveats
+
+- Portability
+- Memory locked in page cache
+- Modifying in-flight data
+
 == Zero-copy options
 
 - `sendfile()`
@@ -346,19 +355,7 @@ and the NIC will deference them, and read bytes directly out of RAM and onto the
 So it really is zero copy!
 ]
 
-== Caveats
-
-- Portability
-- Memory locked in page cache
-- Modifying in-flight data
-
 /*
-== Ownership
-
-#align(center, image("ownership.svg", width: 70%))
----
-#v(1.5mm)
-#align(center, image("ownership_2.svg", width: 70%))
 
 == ???
 
