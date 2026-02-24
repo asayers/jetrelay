@@ -3,10 +3,6 @@
 
 = The in-kernel reactor
 
-==
-
-#image("perf_sendfile.png")
-
 == `write() write() write()`
 
 #speaker-note[
@@ -119,7 +115,7 @@ You can almost think of io_uring as a Tokio reactor implemented in kernelspace.
 (Caveat: I'm describing the behaviour of recent kernels)
 ]
 
-== Which SQE?
+== Which op?
 
 #grid(columns:(1fr, 1fr))[
 *Syscall*
@@ -133,7 +129,7 @@ libc::write(
 ][
 *SQE*
 ```rust
-let sqe = opcode::Write::new(
+let op = opcode::Write::new(
     conn.as_raw_fd(),
     buf.as_ptr(),
     buf.len(),
@@ -141,7 +137,7 @@ let sqe = opcode::Write::new(
 ```
 ]
 
-Most syscalls have a corresponding SQE
+Most syscalls have a corresponding opcode
 
 #pause
 
@@ -159,7 +155,7 @@ opcode::SendZc::new(
 ).build()
 ```
 ],[
-Produces two CQEs:
+Produces two completions:
 - when data _enters_ the send queue
 - when data _leaves_ the send queue
 ])
@@ -232,19 +228,19 @@ loop {
     for (client_id, client) in &mut CLIENTS {
         if client.offset < DATA.len() && !client.in_flight {
             let new_data = &DATA[client.offset..];
-            let sqe = opcode::SendZc::new(
+            let op = opcode::SendZc::new(
                 client.conn.as_raw_fd(), new_data.as_ptr(), new_data.len() as u32,
             ).build();
-            uring.submission().push(sqe.user_data(client_id));
+            let op_with_cookie = op.user_data(client_id);
+            uring.submission().push(op_with_cookie);
             client.in_flight = true;
         }
     }
     uring.submit_and_wait(1)?;
-    for cqe in uring.completion() {
-        let client_id = cqe.user_data();
+    for x in uring.completion() {
+        let client_id = x.user_data();
         let client = CLIENTS[client_id];
-        let n = cqe.result()?;
-        client.offset += n;
+        client.offset += x.result()?;
         client.in_flight = false;
     }
 }

@@ -245,6 +245,10 @@ It would all work the exact same way
 except that the data gets sync'd to disk after a while
 ]
 
+---
+
+#image("perf_sendfile.png")
+
 == Caveats
 
 - Portability

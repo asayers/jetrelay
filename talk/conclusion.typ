@@ -9,7 +9,7 @@
 - Kernel bypass?
 - Custom hardware...
 
-== Recap
+==
 
 #speaker-note[
 ...and that's as far as we'll be going down the rabbit hole today.
