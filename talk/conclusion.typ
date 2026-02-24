@@ -3,6 +3,12 @@
 
 = Conclusion
 
+== Where to go from here?
+
+- More threads, more rings
+- Kernel bypass?
+- Custom hardware...
+
 == Recap
 
 #speaker-note[
@@ -13,24 +19,24 @@ which requires non-standard hardware,
 so I'm drawing the line there.
 ]
 
-- Non-blocking I/O // via epoll/tokio
-- Batching
-- Zero-copy // via sendfile, but you could also use send_zc
-- Full async I/O // via io_uring
+#let unknown = text(gray)[???]
+#align(center,
+table(columns:4, inset: 0.4em, stroke:none,
+table.header([*Impl*], [*Optimisation*], [*Clients*], [*Throughput*]),
+table.hline(),
+[\#1], [Non-blocking I/O], [2.7k], [4 Gbps],
+[\#2], [Batching], [15k], [32 Gbps],
+[\#3], [Zero-copy], [48k], [80 Gbps],
+[\#4], [Full async I/O], [70k], [147 Gbps],
+))
 
-== Where to go from here?
+// == Conclusions
 
-- More threads, more rings
-- Kernel bypass?
-- Custom hardware...
-
-== Conclusions
-
-- A single box can serve a lot of clients!
-    - if you milk that box for all it's worth
-- Writing platform-agnostic code is noble
-    - but going platform-specific unlocks many cool features
-    - if you're writing software in-house, you probably know _exactly_ where it will be run
-- Relinquishing ownership of your data over to the kernel can be useful
-    - you can get it back again with `mmap()`, if you need to
+// - A single box can serve a lot of clients!
+//     - if you milk that box for all it's worth
+// - Writing platform-agnostic code is noble
+//     - but going platform-specific unlocks many cool features
+//     - if you're writing software in-house, you probably know _exactly_ where it will be run
+// - Relinquishing ownership of your data over to the kernel can be useful
+//     - you can get it back again with `mmap()`, if you need to
 

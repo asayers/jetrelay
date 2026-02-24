@@ -74,16 +74,18 @@ You get two channels:
 - one coming from the kernel back to userspace (cqueue)
 ]
 
-
-== CQEs
+---
 
 ```rust
+uring.submission().push(sqe);
+uring.submission().push(sqe);
 uring.submission().push(sqe);
 
 uring.submit_and_wait(1);
 
-let cqe = uring.completion().next().unwrap();
-println!("Result was {}", cqe.result()?);
+for cqe in uring.completion() {
+    println!("Result was {}", cqe.result()?);
+}
 ```
 
 #speaker-note[
@@ -142,6 +144,8 @@ Most syscalls have a corresponding SQE
 
 ---
 
+#v(1em)
+#grid(columns:(2fr, 3fr),[
 ```rust
 opcode::SendZc::new(
     fd,
@@ -149,10 +153,11 @@ opcode::SendZc::new(
     slice.len() as u32,
 ).build()
 ```
-
+],[
 Produces two CQEs:
-- one when data _enters_ the send queue
-- one when data _leaves_ the send queue
+- when data _enters_ the send queue
+- when data _leaves_ the send queue
+])
 
 // == User data
 
@@ -244,6 +249,8 @@ loop {
 
 == Performance
 
+---
+
 #let unknown = text(gray)[???]
 #align(center,
 table(columns:3, inset: 0.4em, stroke:none,
@@ -254,6 +261,8 @@ table.hline(),
 [\#3], [48k], [80 Gbps],
 [\#4], [15k], [32 Gbps],
 ))
+
+= Tweaking and tuning
 
 == Setup
 
@@ -382,7 +391,7 @@ Error: Cannot allocate memory
 - `rlimit::setrlimit(Resource::MEMLOCK)`
 
 ```console
-systemd-run --user -p LimitNOFILE=100000 -p LimitMEMLOCK=infinity
+systemd-run --user -p LimitNOFILE=infinity -p LimitMEMLOCK=infinity
 ```
 ---
 
@@ -394,31 +403,32 @@ table.hline(),
 [\#1], [2.7k], [4 Gbps],
 [\#2], [15k], [32 Gbps],
 [\#3], [48k], [80 Gbps],
-[\#4.1], [70k], [147 Gbps],
+[\#4], [70k], [147 Gbps],
 ))
 
-== Possibilities
+// == Possibilities
 
-- Can have multiple rings
-    - one-per-core is recommended
-    - eg. an embedded DB crate could have its own private ring
-    - ring-to-ring messaging
-- submit and wait
-    - ...for at least `n` CQEs
-    - ...with a timeout
-- per-ring fd table
-- multi-shot accept
-    - fds registered to global or local table
-- multi-shot recv
-    - buffers pulled from a pool
+// - Can have multiple rings
+//     - one-per-core is recommended
+//     - eg. an embedded DB crate could have its own private ring
+//     - ring-to-ring messaging
+// - submit and wait
+//     - ...for at least `n` CQEs
+//     - ...with a timeout
+// - per-ring fd table
+// - multi-shot accept
+//     - fds registered to global or local table
+// - multi-shot recv
+//     - buffers pulled from a pool
 
 == Caveats
 
 - Not portable to other unixes
     - or even to older Linux kernels!
 - Buffer management
-- Fairness
-    - can starve part of the state machine
+- State machines by-hand
+// - Fairness
+//     - can starve part of the state machine
 
 
 

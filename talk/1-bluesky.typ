@@ -5,6 +5,19 @@
 
 = Bluesky
 
+==
+
+#align(center)[
+#image("bsky_1.svg", width:50%)
+]
+
+==
+
+#align(center)[
+#image("bsky_2.svg", width:50%)
+]
+
+
 /*
 == Bluesky
 
@@ -249,7 +262,7 @@ Remember the last timestamp you saw \
 
 #alternatives(
 tree[
-  - Firehose
+  - Relay
     - Repeater
       - Client
       - Client
@@ -261,7 +274,7 @@ tree[
       - Client
 ],
 tree[
-  - Firehose
+  - Relay
     - Repeater
       - Client
       - Client
@@ -292,6 +305,13 @@ Ok, we're going to dive into an implementation now,
 but just keep this in mind:
 the name of the game is to cut down the amount of work being performed _per-client_
 ]
+
+==
+
+#align(center)[
+#image("throughput_chart.svg", height:80%)
+]
+
 // memcpy speed: \~3 GiB/s/core  ... or is it more like 10 GiB/s ??
 // => \~15k clients/core
 

@@ -4,7 +4,7 @@
 
 #let cetz-canvas = touying-reducer.with(reduce: cetz.canvas, cover: cetz.draw.hide.with(bounds: true))
 
-= Zero-copy
+= Writing to TCP sockets
 
 == TCP send queue
 
@@ -89,6 +89,8 @@ struct page_frag {
     the problem is there's no way to refer to _this_ (the fragment) when calling
     `write()`.
 ]
+
+= Zero-copy
 
 == What we want is...
 

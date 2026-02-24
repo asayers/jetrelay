@@ -109,7 +109,7 @@ Error: Too many open files (os error 24)
 #pause
 
 ```console
-systemd-run --user -p LimitNOFILE=100000
+systemd-run --user -p LimitNOFILE=infinity
 ```
 
 ---

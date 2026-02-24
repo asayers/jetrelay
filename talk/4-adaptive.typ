@@ -21,7 +21,7 @@ Send in batches of 100 msgs:
 )]
 
 #v(1fr)
-Cost: 125ms added latency on average
+Cost: 125ms added latency (on average)
 #v(1fr)
 
 
