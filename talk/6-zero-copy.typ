@@ -4,92 +4,6 @@
 
 #let cetz-canvas = touying-reducer.with(reduce: cetz.canvas, cover: cetz.draw.hide.with(bounds: true))
 
-= Writing to TCP sockets
-
-== TCP send queue
-
-Logically, a queue of bytes
-
-Typically a few MiB in capacity
-
-`write()`ing to the socket pushes to the back
-
-Bytes at the front get packetised & sent
-
-Bytes dropped from the front when ACK'd
-
-== Fragments
-
-// #quote(block: true, attribution: [`mm/page_frag_cache.c`])[
-// An arbitrary-length arbitrary-offset area of memory which resides within a
-// 0 or higher order page.  Multiple fragments within that page are
-// individually refcounted, in the page's reference counter.
-// ]
-
-#grid(columns:(1fr, 1.2fr), gutter: 1em,
-[
-#titled-block(title: [`C`])[
-```c
-struct page_frag {
-    // backing allocation
-    // (refcounted)
-    struct page *page;
-    __u16 offset;
-    __u16 size;
-};
-```
-]
-],
-[
-#text(16pt)[
-```text
-    Arc ptrs                   ┌─────────┐
-    ________________________ / │ Bytes 2 │
-   /                           └─────────┘
-  /          ┌───────────┐     |         |
- |_________/ │  Bytes 1  │     |         |
- |           └───────────┘     |         |
- |           |           | ___/ data     | tail
- |      data |      tail |/              |
- v           v           v               v
- ┌─────┬─────┬───────────┬───────────────┬─────┐
- │ Arc │     │           │               │     │
- └─────┴─────┴───────────┴───────────────┴─────┘
-```]
-])
-
-// If you're ever used the "bytes" crate this may look familiar
-
-// #small[There's also an optimization which allows very small fragments to be
-// inlined into the skb]
-
-== `write()`
-
-// Notes from andrew:
-
-// - Add some pseudocode to the diagram slides
-// - He thought the "many writes" slide meant a big chunk of the vec was being copied, not multiple copies
-//     - suggests a vertical frag cache, or maybe scattered?  (But it's a bump arena...)
-
-#align(center, image("zerocopy_1.svg", height: 80%))
-
-== `write() write() write()`
-#speaker-note[
-    Now we send the same data to multiple clients, which each have their own
-    send queue...
-]
-#align(center, image("zerocopy_2.svg", height: 80%))
-#speaker-note[...but look at all these copies!]
-
----
-
-#align(center, image("zerocopy_3.svg", height: 80%))
-#speaker-note[
-    _This_ is what we want - one copy, lots of references to the same data.  But
-    the problem is there's no way to refer to _this_ (the fragment) when calling
-    `write()`.
-]
-
 = Zero-copy
 
 == What we want is...
@@ -111,100 +25,6 @@ A buffer
 
 #v(1cm)
 ...a *memfd*
-
-== memfd
-
-#table(
-columns: (0.7fr, 1fr, 1fr), inset: 0.5em,
-table.header([],
-[*Vec\<u8\>*],
-[*memfd*],
-),
-[Create],
-[`Vec::new()`],
-[`memfd_create()`],
-[Append],
-[`extend()`],
-[`write()`],
-// [Modify],
-// [`copy_from_slice()`],
-// [`pwrite()`],
-[Modify],
-[`&mut xs[..]`],
-[`mmap()`],
-[Resize],
-[`resize()`],
-[`ftruncate()`],
-// [Free],
-// [`mem::drop()`],
-// [`close()`],
-[Punch hole],
-text(size:20pt, fill:gray)[N/A],
-[`fallocate()`],
-)
-
-#speaker-note[
-    You can push bytes on the end, causing it to grow
-    You can modify existing bytes
-    You can resize it (fills in with zeroes if you enlarge it)
-    
-    Do note however that all of these are syscalls!
-    So they're more expensive to call
-    than these
-    But that's shouganai if we're modifying memory owned by the kernel
-
-    Plus there's a bonus operation: hole-punching
-    not supported by Vecs
-    well... you can do it with `madvise()`...
-]
-
----
-
-// Implementation:\
-Just a file which doesn't do writeback
-
-Data lives in the page cache
-
-Same as creating a file in /tmp \
-#small[...more or less, assuming tmpfs and `O_TMPFILE`]
-
-#speaker-note[
-    ...and what is this thing?
-    Just a file!
-    The contents live in the page cache, like any other file.
-    The only difference is that 
-    writeback is turned off.
-    So the pages remain permanently dirty.
-    Because there's nowhere for it to
-    write back to.
-    (Except swap of course)
-]
-
-#speaker-note[
-    And you'll notice that all these functions are
-    the same ones you'd use on a normal file,
-    and they work the exact same way.
-]
-
-
-#speaker-note[
-    By the way, a memfd is basically the same thing as opening a file on a tmpfs
-    with `O_TMPFILE`
-]
-
-#speaker-note[
-    Create it with `memfd_create()`.  This allocates an inode in the VFS, puts
-    an entry in your process's file table, and returns the fd.
-]
-
-// #speaker-note[
-// And when I say "kernel-owned" (you could quibble and say "all memory is owned by
-// the kernel") I mean "owned by the page cache"
-// ]
-
-// Zero-filled regions don't consume any memory \
-// Memory pages are allocated as you write to it \
-// (`Vec::with_capacity(huge)` has the same property)
 
 == memfd
 
@@ -252,6 +72,97 @@ This has got to be one of the craziest user interfaces I've ever seen
 ]
 
 #v(1fr)
+
+== memfd API
+
+#table(
+columns: (0.7fr, 1fr, 1fr), inset: 0.5em,
+table.header([],
+[*Vec\<u8\>*],
+[*memfd*],
+),
+[Append],
+[`extend()`],
+[`write()`],
+// [Modify],
+// [`copy_from_slice()`],
+// [`pwrite()`],
+[Modify],
+[`&mut xs[..]`],
+[`mmap()`],
+[Resize],
+[`resize()`],
+[`ftruncate()`],
+// [Free],
+// [`mem::drop()`],
+// [`close()`],
+[Punch hole],
+text(size:20pt, fill:gray)[N/A],
+[`fallocate()`],
+)
+
+#speaker-note[
+    You can push bytes on the end, causing it to grow
+    You can modify existing bytes
+    You can resize it (fills in with zeroes if you enlarge it)
+    
+    Do note however that all of these are syscalls!
+    So they're more expensive to call
+    than these
+    But that's shouganai if we're modifying memory owned by the kernel
+
+    Plus there's a bonus operation: hole-punching
+    not supported by Vecs
+    well... you can do it with `madvise()`...
+]
+
+== memfd implementation
+
+// Implementation:\
+Just a file which doesn't do writeback
+
+Data lives in the page cache
+
+Same as creating a file in /tmp \
+#small[...more or less, assuming tmpfs and `O_TMPFILE`]
+
+#speaker-note[
+    ...and what is this thing?
+    Just a file!
+    The contents live in the page cache, like any other file.
+    The only difference is that 
+    writeback is turned off.
+    So the pages remain permanently dirty.
+    Because there's nowhere for it to
+    write back to.
+    (Except swap of course)
+]
+
+#speaker-note[
+    And you'll notice that all these functions are
+    the same ones you'd use on a normal file,
+    and they work the exact same way.
+]
+
+
+#speaker-note[
+    By the way, a memfd is basically the same thing as opening a file on a tmpfs
+    with `O_TMPFILE`
+]
+
+#speaker-note[
+    Create it with `memfd_create()`.  This allocates an inode in the VFS, puts
+    an entry in your process's file table, and returns the fd.
+]
+
+// #speaker-note[
+// And when I say "kernel-owned" (you could quibble and say "all memory is owned by
+// the kernel") I mean "owned by the page cache"
+// ]
+
+// Zero-filled regions don't consume any memory \
+// Memory pages are allocated as you write to it \
+// (`Vec::with_capacity(huge)` has the same property)
 
 == sendfile()
 

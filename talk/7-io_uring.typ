@@ -3,6 +3,10 @@
 
 = The in-kernel reactor
 
+==
+
+#image("perf_sendfile.png")
+
 == `write() write() write()`
 
 #speaker-note[
@@ -59,13 +63,13 @@ Wouldn't it be nice if there was a generic way of describing an arbitrary set of
 
 #v(1cm)
 #align(center, [
-// squeue:
+#text(16pt)[*squeue*]
 #image("io_uring_squeue.svg", width: 60%)
 ])
 #v(1cm)
 #align(center, [
-// cqueue:
 #image("io_uring_cqueue.svg", width: 60%)
+#text(16pt)[*cqueue*]
 ])
 
 #speaker-note[
@@ -77,14 +81,15 @@ You get two channels:
 ---
 
 ```rust
-uring.submission().push(sqe);
-uring.submission().push(sqe);
-uring.submission().push(sqe);
+uring.submission().push(op1);
+uring.submission().push(op2);
+uring.submission().push(op3);
+uring.submission().push(op4);
 
 uring.submit_and_wait(1);
 
-for cqe in uring.completion() {
-    println!("Result was {}", cqe.result()?);
+for x in uring.completion() {
+    println!("Result was {}", x.result()?);
 }
 ```
 
@@ -114,7 +119,7 @@ You can almost think of io_uring as a Tokio reactor implemented in kernelspace.
 (Caveat: I'm describing the behaviour of recent kernels)
 ]
 
-== What SQE?
+== Which SQE?
 
 #grid(columns:(1fr, 1fr))[
 *Syscall*

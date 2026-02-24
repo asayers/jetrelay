@@ -13,7 +13,7 @@ use tracing_subscriber::{EnvFilter, prelude::*};
 use wsclient::OpCode;
 
 static DATA: LazyLock<Mutex<Vec<u8>>> = LazyLock::new(|| Mutex::new(Vec::with_capacity(MAX_DATA)));
-const MAX_DATA: usize = 1024 * 1024 * 1024;
+const MAX_DATA: usize = 1 << 30;
 const MAX_FILES: u32 = 100_000;
 
 fn main() -> Result<()> {

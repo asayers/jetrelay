@@ -7,8 +7,34 @@
    viewBox="0 0 141.40556 10.543001"
    version="1.1"
    id="svg1"
+   sodipodi:docname="io_uring_squeue.svg"
+   inkscape:export-filename="io_uring_squeue.svg"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   inkscape:version="1.4.2 (ebf0e940d0, 2025-05-08)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="2.4575922"
+     inkscape:cx="405.47818"
+     inkscape:cy="-46.183416"
+     inkscape:window-width="3840"
+     inkscape:window-height="2127"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
   <defs
      id="defs1">
     <marker
@@ -55,9 +81,7 @@
          id="tspan1-09"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.29167px;font-family:Iosevka;-inkscape-font-specification:Iosevka;fill:#5c00d2;fill-opacity:1;stroke:none;stroke-width:0.6"
          x="78.977127"
-         y="43.271011">write(<tspan
-   style="font-style:italic;fill:#5c00d2;fill-opacity:1"
-   id="tspan4-6">$x</tspan>)</tspan></text>
+         y="43.271011">open(...)</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:5.29167px;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#5c00d2;fill-opacity:1;stroke:none;stroke-width:0.600001"
@@ -67,9 +91,7 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.29167px;font-family:Iosevka;-inkscape-font-specification:Iosevka;fill:#5c00d2;fill-opacity:1;stroke:none;stroke-width:0.6"
          x="113.32828"
          y="43.106968"
-         id="tspan3-8">write(<tspan
-   style="font-style:italic;fill:#5c00d2;fill-opacity:1"
-   id="tspan5-5">$y</tspan>)</tspan></text>
+         id="tspan3-8">read(...)</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:5.29167px;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#5c00d2;fill-opacity:1;stroke:none;stroke-width:0.600001"
@@ -79,9 +101,7 @@
          id="tspan1-0-1"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.29167px;font-family:Iosevka;-inkscape-font-specification:Iosevka;fill:#5c00d2;fill-opacity:1;stroke:none;stroke-width:0.6"
          x="147.67943"
-         y="43.271011">write(<tspan
-   style="font-style:italic;fill:#5c00d2;fill-opacity:1"
-   id="tspan6-1">$z</tspan>)</tspan></text>
+         y="43.271011">write(...)</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:4.93889px;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#0d6600;fill-opacity:1;stroke:none;stroke-width:0.600001"
